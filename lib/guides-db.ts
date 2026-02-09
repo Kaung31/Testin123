@@ -178,7 +178,7 @@ export const guidesData = {
         image: "placeholder"
       }
     ]
-  }
+  },
   // ... previous guide ends here },
 
   'e13-water-ingress': {
