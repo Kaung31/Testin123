@@ -212,26 +212,26 @@ export const guidesData = {
         title: "Open Deck Cover",
         desc: "Remove six hex bolts on deck. Then remove the four Phillips-head screws on the underside of the scooter deck.",
         tools: "Hex 3, Phillips head driver",
-        image: "/image/e13/step1.jpg"
+        image: "/images/e13/step1.jpg"
       },
       {
         order: 2,
         title: "Remove Deck Plate",
         desc: "Slide out the deck cover carefully.",
-        image: "/image/e13/step2.jpg"
+        image: "/images/e13/step2.jpg"
       },
       {
         order: 3,
         title: "Disconnect System",
         desc: "Unplug all connectors visible in the battery compartment.",
-        image: "/image/e13/step3.jpg"
+        image: "/images/e13/step3.jpg"
       },
       {
         order: 4,
         title: "Unmount Battery",
         desc: "Remove the two battery mounting brackets using Hex 3.",
         tools: "Hex 3",
-        image: "/image/e13/step4.jpg"
+        image: "/images/e13/step4.jpg"
       },
       {
         order: 5,
@@ -244,41 +244,41 @@ export const guidesData = {
         order: 6,
         title: "Remove Components",
         desc: "Lift the battery carefully and remove the controller (MCU). Check for yellow/orange residue indicating water damage.",
-        image: "/image/e13/step6.jpg"
+        image: "/images/e13/step6.jpg"
       },
       {
         order: 7,
         title: "Remove Charging Port",
         desc: "Unscrew two charger port Phillips screws from the right side of the box.",
         tools: "Phillips screwdriver",
-        image: "/image/e13/step7.jpg"
+        image: "/images/e13/step7.jpg"
       },
       {
         order: 8,
         title: "Clean Battery Box",
         desc: "Clean the inside of the chassis thoroughly using degreaser and blue roll tissue.",
         warning: "Wear gloves to avoid contact with residue.",
-        image: "/image/e13/step8.jpg"
+        image: "/images/e13/step8.jpg"
       },
       {
         order: 9,
         title: "Dry Chassis",
         desc: "Wipe everything down with a dry cloth to ensure no moisture remains.",
-        image: "/image/e13/step9.jpg"
+        image: "/images/e13/step9.jpg"
       },
       {
         order: 10,
         title: "Install New Components",
         desc: "Replace with new Battery, MCU, and Charging port. Secure them in place.",
         tools: "Hex 3",
-        image: "/image/e13/step10.jpg"
+        image: "/images/e13/step10.jpg"
       },
       {
         order: 11,
         title: "Reconnect System",
         desc: "Plug in all connectors. Ensure solid clicks on all plugs.",
         tip: "Cable Routing: Biggest hole = Power cable. Beside biggest = Rear light. Buttonhole = Digital display cable.",
-        image: "/image/e13/step11.jpg"
+        image: "/images/e13/step11.jpg"
       },
       {
         order: 12,
@@ -293,7 +293,7 @@ export const guidesData = {
         desc: "Reinstall the deck cover and tighten screws evenly. Do not forget underside four screws and long metal plate.",
         tools: "Hex 3, Phillips driver",
         warning: "Seal Check: Ensure the skirt (seal) between deck and battery box is correctly placed at the four screw points.",
-        image: "/image/e13/step13.jpg"
+        image: "/images/e13/step13.jpg"
       }
     ]
   }
