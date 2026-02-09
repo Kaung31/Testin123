@@ -127,10 +127,14 @@ export default function GuideDetailPage() {
                   </div>
                 </div>
 
-                {/* Image Placeholder */}
+                {/* NEW CODE (Renders the real image) */}
                 {step.image && (
-                  <div className="bg-slate-100 rounded-2xl aspect-video flex items-center justify-center mb-4">
-                    <p className="text-slate-400 text-sm">📷 Image: {step.image}</p>
+                  <div className="rounded-2xl overflow-hidden mb-4 border border-slate-200 shadow-sm">
+                    <img 
+                      src={step.image} 
+                      alt={step.title} 
+                      className="w-full h-auto object-cover"
+                    />
                   </div>
                 )}
 
