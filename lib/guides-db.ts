@@ -179,4 +179,123 @@ export const guidesData = {
       }
     ]
   }
+  // ... previous guide ends here },
+
+  'e13-water-ingress': {
+    id: 'e13-water-ingress',
+    title: "Water Ingress Repair (Battery/MCU)",
+    model: "Air 3 to Air 5 Pro",
+    difficulty: "Hard",
+    time: "45-60 mins",
+    category: "Electronics",
+    description: "Procedure for diagnosing and repairing water ingress (yellow/orange residue), including Battery and MCU replacement.",
+    videoUrl: "", // Add video path if you have one, e.g. "/image/e13/video.mp4"
+
+    // TOOLS FROM YOUR DOCUMENT
+    tools: [
+      { name: "Hex Key 3mm", icon: "/image/e13/tool-hex3.jpg" },
+      { name: "Hex Key 2.5mm", icon: "/image/e13/tool-hex25.jpg" },
+      { name: "Phillips Screwdriver", icon: "/image/e13/tool-phillips.jpg" },
+      { name: "Degreaser & Blue Roll", icon: "/image/e13/tool-cleaning.jpg" }
+    ],
+
+    // PARTS FROM YOUR DOCUMENT
+    parts: [
+      { name: "Battery Unit", sku: "PSPUR-BATTERY", image: "/image/e13/part-battery.jpg" },
+      { name: "MCU (Controller)", sku: "PSPUR-MCU", image: "/image/e13/part-mcu.jpg" },
+      { name: "Charging Port", sku: "PSPUR-PORT", image: "/image/e13/part-port.jpg" }
+    ],
+
+    // STEPS FROM YOUR DOCUMENT
+    steps: [
+      {
+        order: 1,
+        title: "Open Deck Cover",
+        desc: "Remove six hex bolts on deck. Then remove the four Phillips-head screws on the underside of the scooter deck.",
+        tools: "Hex 3, Phillips head driver",
+        image: "/image/e13/step1.jpg"
+      },
+      {
+        order: 2,
+        title: "Remove Deck Plate",
+        desc: "Slide out the deck cover carefully.",
+        image: "/image/e13/step2.jpg"
+      },
+      {
+        order: 3,
+        title: "Disconnect System",
+        desc: "Unplug all connectors visible in the battery compartment.",
+        image: "/image/e13/step3.jpg"
+      },
+      {
+        order: 4,
+        title: "Unmount Battery",
+        desc: "Remove the two battery mounting brackets using Hex 3.",
+        tools: "Hex 3",
+        image: "/image/e13/step4.jpg"
+      },
+      {
+        order: 5,
+        title: "Release Chassis Points",
+        desc: "Remove two hex chassis bolts from the back of the battery box.",
+        tools: "Hex 2.5",
+        image: "/image/e13/step5.jpg"
+      },
+      {
+        order: 6,
+        title: "Remove Components",
+        desc: "Lift the battery carefully and remove the controller (MCU). Check for yellow/orange residue indicating water damage.",
+        image: "/image/e13/step6.jpg"
+      },
+      {
+        order: 7,
+        title: "Remove Charging Port",
+        desc: "Unscrew two charger port Phillips screws from the right side of the box.",
+        tools: "Phillips screwdriver",
+        image: "/image/e13/step7.jpg"
+      },
+      {
+        order: 8,
+        title: "Clean Battery Box",
+        desc: "Clean the inside of the chassis thoroughly using degreaser and blue roll tissue.",
+        warning: "Wear gloves to avoid contact with residue.",
+        image: "/image/e13/step8.jpg"
+      },
+      {
+        order: 9,
+        title: "Dry Chassis",
+        desc: "Wipe everything down with a dry cloth to ensure no moisture remains.",
+        image: "/image/e13/step9.jpg"
+      },
+      {
+        order: 10,
+        title: "Install New Components",
+        desc: "Replace with new Battery, MCU, and Charging port. Secure them in place.",
+        tools: "Hex 3",
+        image: "/image/e13/step10.jpg"
+      },
+      {
+        order: 11,
+        title: "Reconnect System",
+        desc: "Plug in all connectors. Ensure solid clicks on all plugs.",
+        tip: "Cable Routing: Biggest hole = Power cable. Beside biggest = Rear light. Buttonhole = Digital display cable.",
+        image: "/image/e13/step11.jpg"
+      },
+      {
+        order: 12,
+        title: "Refit Grommets",
+        desc: "Refit the chassis grommet cover.",
+        tools: "Hex 2.5",
+        image: "/image/e13/step12.jpg"
+      },
+      {
+        order: 13,
+        title: "Close Deck",
+        desc: "Reinstall the deck cover and tighten screws evenly. Do not forget underside four screws and long metal plate.",
+        tools: "Hex 3, Phillips driver",
+        warning: "Seal Check: Ensure the skirt (seal) between deck and battery box is correctly placed at the four screw points.",
+        image: "/image/e13/step13.jpg"
+      }
+    ]
+  }
 };
