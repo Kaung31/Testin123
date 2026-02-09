@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 3D Scooter Animation */
+@keyframes float-3d {
+  0% { transform: translateY(0px) rotateY(-5deg) rotateX(2deg); }
+  50% { transform: translateY(-15px) rotateY(5deg) rotateX(-2deg); }
+  100% { transform: translateY(0px) rotateY(-5deg) rotateX(2deg); }
+}
+
+@keyframes shadow-pulse {
+  0% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 0.1; transform: scale(0.9); }
+  100% { opacity: 0.2; transform: scale(1); }
+}
+
+.scooter-3d-container {
+  perspective: 1000px;
+}
+
+.scooter-3d-model {
+  animation: float-3d 6s ease-in-out infinite;
+  filter: drop-shadow(0 20px 30px rgba(0,0,0,0.3));
+  transform-style: preserve-3d;
+}
+
+.scooter-shadow {
+  animation: shadow-pulse 6s ease-in-out infinite;
+}
