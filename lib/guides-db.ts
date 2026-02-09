@@ -179,7 +179,6 @@ export const guidesData = {
       }
     ]
   },
-  // ... previous guide ends here },
 
   'e13-water-ingress': {
     id: 'e13-water-ingress',
