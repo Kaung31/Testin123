@@ -239,7 +239,7 @@ export const guidesData = {
         title: "Release Chassis Points",
         desc: "Remove two hex chassis bolts from the back of the battery box.",
         tools: "Hex 2.5",
-        image: "/image/e13/step5.jpg"
+        image: "placeholder"
       },
       {
         order: 6,
@@ -286,7 +286,7 @@ export const guidesData = {
         title: "Refit Grommets",
         desc: "Refit the chassis grommet cover.",
         tools: "Hex 2.5",
-        image: "/image/e13/step12.jpg"
+        image: "placeholder"
       },
       {
         order: 13,
