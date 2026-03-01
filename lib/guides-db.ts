@@ -296,5 +296,127 @@ export const guidesData = {
         image: "/images/e13/step13.jpg"
       }
     ]
+  },
+  
+  'e3-display-cable-replacement': {
+    id: 'e3-display-cable-replacement',
+    title: "Display Cable Replacement (Internal E3 Fix)",
+    model: "Air 3 to Air 5 Pro",
+    difficulty: "Hard",
+    time: "30-45 mins",
+    category: "Electronics",
+    description: "Full internal wiring replacement. Required when the E3 error persists after a screen swap, indicating a cable break inside the steerer or frame.",
+    videoUrl: "", 
+
+    tools: [
+      { name: "Hex Key 2.5mm", icon: "🔩" },
+      { name: "Hex Key 3mm", icon: "🔩" },
+      { name: "Pliers", icon: "🔧" },
+      { name: "Small Flathead Screwdriver", icon: "🪛" },
+      { name: "Utility Knife", icon: "🔪" }
+    ],
+
+    parts: [
+      { name: "Main Display Cable (Internal)", sku: "PSPUR-CABLE-E3", image: "placeholder" },
+      { name: "Top Cap Grommet", sku: "PSPUR-GROM-TOP", image: "placeholder" }
+    ],
+
+    steps: [
+      {
+        order: 1,
+        title: "Power Down & Open Deck",
+        desc: "Ensure the scooter is off. Remove the deck cover and front mudguard to expose the controller and internal wiring.",
+        tools: "Hex Key 3mm",
+        image: ""
+      },
+      {
+        order: 2,
+        title: "Release Lower Brake Cable",
+        desc: "Loosen the pinch bolt at the front wheel. Slide the brake cable out from the pinch bolt cover through the guide hole.",
+        tools: "Hex Key 3mm",
+        image: ""
+      },
+      {
+        order: 3,
+        title: "Release Upper Brake Lever",
+        desc: "Pull the brake lever, align the slots in the adjustment nuts, and slide the brake cable out of the lever assembly.",
+        tip: "Aligning the slots allows the silver wire to pop right out.",
+        image: ""
+      },
+      {
+        order: 4,
+        title: "Disconnect Display from Handlebar",
+        desc: "Pop the handlebar out of the top of the steerer tube and unplug the display cable connector.",
+        image: ""
+      },
+      {
+        order: 5,
+        title: "Remove Top Cap Grommet",
+        desc: "Fold the steerer tube down. Use a flathead screwdriver to pry out the grommet. Use a knife to cut the grommet for removal if it's stuck.",
+        tools: "Small Flathead, Utility Knife",
+        warning: "Be careful not to scratch the paint on the steerer tube.",
+        image: ""
+      },
+      {
+        order: 6,
+        title: "Extract Brake Cable",
+        desc: "Pull the brake cable completely out through the top cap hole to clear the path for the electronic cable.",
+        image: ""
+      },
+      {
+        order: 7,
+        title: "Expose Frame Grommet",
+        desc: "Remove the two frame grommet cover bolts located near the folding mechanism.",
+        tools: "Hex Key 2.5mm",
+        image: ""
+      },
+      {
+        order: 8,
+        title: "Unplug from Controller",
+        desc: "Unplug the display cable from the microcontroller (ESC) inside the battery compartment.",
+        image: ""
+      },
+      {
+        order: 9,
+        title: "Remove Old Cable",
+        desc: "Pull the display cable out through the frame grommet hole, then pull the head through the frame inlet port.",
+        image: ""
+      },
+      {
+        order: 10,
+        title: "Feed New Display Cable",
+        desc: "Feed the new cable into the top cap hole, through the frame inlet, and finally into the frame grommet hole.",
+        tip: "Straighten the cable head as much as possible to help it pass through the tight inlet port.",
+        parts: "Main Display Cable",
+        image: ""
+      },
+      {
+        order: 11,
+        title: "Secure Frame Connections",
+        desc: "Connect the cable to the ESC. Tuck cables neatly into the frame grommet and secure the cover with bolts.",
+        tools: "Hex Key 2.5mm",
+        image: ""
+      },
+      {
+        order: 12,
+        title: "Reinstall Handlebar",
+        desc: "Feed the cable through the steerer tube, reconnect it to the display, and reinsert the handlebar.",
+        image: ""
+      },
+      {
+        order: 13,
+        title: "Route & Lock Brake Cable",
+        desc: "Feed the brake cable back through the top cap. Reattach it to the brake lever and rotate the nuts to lock it.",
+        image: ""
+      },
+      {
+        order: 14,
+        title: "Brake Tensioning",
+        desc: "Pull the cable tight at the wheel using pliers while tightening the pinch bolt. Test the lever feel.",
+        tools: "Pliers, Hex Key 3mm",
+        warning: "Ensure the brake lever feels firm before riding. Do not over-tighten the pinch bolt or you may snap the cable.",
+        image: ""
+      }
+    ]
   }
 };
