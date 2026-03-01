@@ -245,7 +245,7 @@ export default function GuideDetailPage() {
                   {/* Card header — always visible */}
                   <div className="flex items-center gap-4 p-5">
                     {/* Step number badge */}
-                    <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 font-black text-base transition-all ${
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 font-black text-lg transition-all ${
                       isActive
                         ? 'bg-blue-500 text-white shadow-md shadow-blue-500/30'
                         : isCompleted
@@ -253,20 +253,24 @@ export default function GuideDetailPage() {
                         : 'bg-slate-100 text-slate-400'
                     }`}>
                       {isCompleted && !isActive
-                        ? <CheckCircle2 size={18} />
+                        ? <CheckCircle2 size={20} />
                         : step.order
                       }
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <p className={`font-bold text-base leading-tight ${
-                        isActive ? 'text-slate-900' : isFuture ? 'text-slate-400' : 'text-slate-700'
+                      <p className={`font-bold leading-tight ${
+                        isActive
+                          ? 'text-slate-900 text-lg'
+                          : isFuture
+                          ? 'text-slate-400 text-base'
+                          : 'text-slate-700 text-base'
                       }`}>
                         {step.title}
                       </p>
                       {/* Show tools tag inline on collapsed steps */}
                       {!isActive && step.tools && (
-                        <p className="text-[11px] text-slate-400 font-medium mt-0.5 truncate">
+                        <p className="text-xs text-slate-400 font-medium mt-1 truncate">
                           🔧 {step.tools}
                         </p>
                       )}
@@ -280,12 +284,14 @@ export default function GuideDetailPage() {
 
                   {/* ── Expanded content (active step only) ── */}
                   {isActive && (
-                    <div className="px-5 pb-5 space-y-4">
+                    <div className="px-6 pb-7 space-y-5">
                       {/* Divider */}
                       <div className="h-px bg-slate-100" />
 
-                      {/* Description */}
-                      <p className="text-slate-700 text-sm leading-relaxed">{step.desc}</p>
+                      {/* Description — big and readable */}
+                      <p className="text-slate-800 text-base md:text-lg leading-relaxed font-medium">
+                        {step.desc}
+                      </p>
 
                       {/* Step image */}
                       {step.image && (
@@ -294,46 +300,46 @@ export default function GuideDetailPage() {
                         </div>
                       )}
 
+                      {/* Tools used this step — prominent pill */}
+                      {step.tools && (
+                        <div className="inline-flex items-center gap-2.5 bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5">
+                          <Wrench size={15} className="text-slate-500 shrink-0" />
+                          <span className="text-sm text-slate-700 font-bold">{step.tools}</span>
+                        </div>
+                      )}
+
                       {/* Warning */}
                       {step.warning && (
-                        <div className="flex gap-3 bg-red-50 border border-red-200 rounded-2xl p-4">
-                          <div className="w-8 h-8 bg-red-100 rounded-xl flex items-center justify-center shrink-0">
-                            <AlertTriangle size={15} className="text-red-600" />
+                        <div className="flex gap-4 bg-red-50 border-2 border-red-200 rounded-2xl p-5">
+                          <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center shrink-0 mt-0.5">
+                            <AlertTriangle size={18} className="text-red-600" />
                           </div>
                           <div>
-                            <p className="text-xs font-black text-red-600 uppercase tracking-wider mb-0.5">Warning</p>
-                            <p className="text-sm text-red-700 leading-relaxed">{step.warning}</p>
+                            <p className="text-xs font-black text-red-500 uppercase tracking-widest mb-1.5">⚠ Warning</p>
+                            <p className="text-base text-red-800 leading-relaxed font-medium">{step.warning}</p>
                           </div>
                         </div>
                       )}
 
                       {/* Tip */}
                       {step.tip && (
-                        <div className="flex gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4">
-                          <div className="w-8 h-8 bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
-                            <Lightbulb size={15} className="text-amber-600" />
+                        <div className="flex gap-4 bg-amber-50 border-2 border-amber-200 rounded-2xl p-5">
+                          <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center shrink-0 mt-0.5">
+                            <Lightbulb size={18} className="text-amber-600" />
                           </div>
                           <div>
-                            <p className="text-xs font-black text-amber-600 uppercase tracking-wider mb-0.5">Pro Tip</p>
-                            <p className="text-sm text-amber-800 leading-relaxed">{step.tip}</p>
+                            <p className="text-xs font-black text-amber-500 uppercase tracking-widest mb-1.5">💡 Pro Tip</p>
+                            <p className="text-base text-amber-900 leading-relaxed font-medium">{step.tip}</p>
                           </div>
-                        </div>
-                      )}
-
-                      {/* Tools used this step */}
-                      {step.tools && (
-                        <div className="flex items-center gap-2">
-                          <Wrench size={13} className="text-slate-400 shrink-0" />
-                          <span className="text-xs text-slate-500 font-semibold">{step.tools}</span>
                         </div>
                       )}
 
                       {/* Navigation buttons */}
-                      <div className="flex gap-3 pt-1">
+                      <div className="flex gap-3 pt-2">
                         {index > 0 && (
                           <button
                             onClick={e => { e.stopPropagation(); goToStep(index - 1); }}
-                            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors"
+                            className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors"
                           >
                             ← Previous
                           </button>
@@ -341,16 +347,16 @@ export default function GuideDetailPage() {
                         {!isDone ? (
                           <button
                             onClick={e => { e.stopPropagation(); goToStep(index + 1); }}
-                            className="flex-1 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                            className="flex-1 px-5 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
                           >
-                            Next Step <ArrowRight size={15} />
+                            Next Step <ArrowRight size={16} />
                           </button>
                         ) : (
                           <button
                             onClick={e => { e.stopPropagation(); setCompleted(prev => new Set([...prev, index])); }}
-                            className="flex-1 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                            className="flex-1 px-5 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
                           >
-                            <CheckCircle2 size={15} /> Mark Complete
+                            <CheckCircle2 size={16} /> Mark Complete
                           </button>
                         )}
                       </div>
