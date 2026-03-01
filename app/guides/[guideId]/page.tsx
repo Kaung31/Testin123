@@ -5,42 +5,47 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
   ChevronLeft, Wrench, Clock, AlertTriangle, CheckCircle2,
-  Lightbulb, Package, PlayCircle, ChevronRight, Timer,
-  Shield, Zap, ArrowRight
+  Lightbulb, Package, PlayCircle, ChevronRight,
+  Shield, Zap, ArrowRight, Stethoscope, CircleDot
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-interface GuideTool   { name: string }
-interface GuidePart   { name: string; sku: string }
+interface GuideTool { name: string }
+interface GuidePart { name: string; sku: string }
 interface GuideStep {
-  order:   number;
-  title:   string;
-  desc:    string;
-  tools?:  string;
-  parts?:  string;
+  order:    number;
+  title:    string;
+  desc:     string;
+  tools?:   string;
+  parts?:   string;
   warning?: string;
-  tip?:    string;
-  image?:  string;
+  tip?:     string;
+  image?:   string;
+}
+interface GuideDiagnosis {
+  symptoms:       string[];
+  possibleCauses: string[];
 }
 interface GuideData {
-  id:          string;
-  title:       string;
-  model:       string;
-  difficulty:  string;
-  time:        string;
-  category:    string;
-  description: string;
-  videoUrl:    string;
-  tools:       GuideTool[];
-  parts:       GuidePart[];
-  steps:       GuideStep[];
+  id:           string;
+  title:        string;
+  model:        string;
+  difficulty:   string;
+  time:         string;
+  category:     string;
+  description?: string;         // optional — older guides have this
+  videoUrl?:    string;         // optional — older guides have this
+  diagnosis?:   GuideDiagnosis; // optional — newer guides have this
+  tools:        GuideTool[];
+  parts:        GuidePart[];
+  steps:        GuideStep[];
 }
 
 // ─── Difficulty config ────────────────────────────────────────────────────────
-const DIFFICULTY: Record<string, { dot: string; badge: string; label: string }> = {
-  Easy:   { dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: 'Easy' },
-  Medium: { dot: 'bg-amber-500',   badge: 'bg-amber-50 text-amber-700 border-amber-200',     label: 'Medium' },
-  Hard:   { dot: 'bg-red-500',     badge: 'bg-red-50 text-red-700 border-red-200',           label: 'Hard' },
+const DIFFICULTY: Record<string, { dot: string; badge: string }> = {
+  Easy:   { dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  Medium: { dot: 'bg-amber-500',   badge: 'bg-amber-50 text-amber-700 border-amber-200' },
+  Hard:   { dot: 'bg-red-500',     badge: 'bg-red-50 text-red-700 border-red-200' },
 };
 
 // ─── Tool icon map ────────────────────────────────────────────────────────────
@@ -51,6 +56,7 @@ function ToolIcon({ name }: { name: string }) {
     n.includes('flathead') ? '⊕' :
     n.includes('phillips') ? '✛' :
     n.includes('plier')    ? '⋔' :
+    n.includes('cutter')   ? '✂' :
     n.includes('knife')    ? '∕' :
     n.includes('heat')     ? '◉' :
     n.includes('glove')    ? '○' :
@@ -64,8 +70,8 @@ function ToolIcon({ name }: { name: string }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function GuideDetailPage() {
-  const params    = useParams();
-  const guideId   = params.guideId as string;
+  const params  = useParams();
+  const guideId = params.guideId as string;
 
   const [guide, setGuide]             = useState<GuideData | null>(null);
   const [loading, setLoading]         = useState(true);
@@ -95,9 +101,9 @@ export default function GuideDetailPage() {
     setCurrentStep(idx);
   };
 
-  // ── States
+  // ── Loading state
   if (loading) return (
-    <div className="flex items-center justify-center h-full min-h-[60vh]">
+    <div className="flex items-center justify-center min-h-[60vh]">
       <div className="flex flex-col items-center gap-4">
         <div className="w-10 h-10 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
         <p className="text-sm font-semibold text-slate-400 tracking-wide uppercase">Loading guide…</p>
@@ -105,23 +111,30 @@ export default function GuideDetailPage() {
     </div>
   );
 
+  // ── Not found state
   if (notFound || !guide) return (
     <div className="p-8 flex flex-col items-center justify-center min-h-[60vh] text-center">
       <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
         <Wrench size={28} className="text-slate-400" />
       </div>
       <h1 className="text-2xl font-black text-slate-900 mb-1">Guide not found</h1>
-      <p className="text-slate-500 mb-6 text-sm">Make sure the JSON file exists at <code className="bg-slate-100 px-2 py-0.5 rounded font-mono text-xs">/public/guides/{guideId}.json</code></p>
-      <Link href="/guides" className="inline-flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-800 transition-colors">
+      <p className="text-slate-500 mb-6 text-sm">
+        Make sure the JSON file exists at{' '}
+        <code className="bg-slate-100 px-2 py-0.5 rounded font-mono text-xs">/public/guides/{guideId}.json</code>
+      </p>
+      <Link
+        href="/guides"
+        className="inline-flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-800 transition-colors"
+      >
         <ChevronLeft size={16} /> Back to Guides
       </Link>
     </div>
   );
 
-  const diff        = DIFFICULTY[guide.difficulty] ?? DIFFICULTY.Medium;
-  const totalSteps  = guide.steps.length;
-  const progress    = Math.round(((currentStep + 1) / totalSteps) * 100);
-  const isDone      = currentStep === totalSteps - 1;
+  const diff       = DIFFICULTY[guide.difficulty] ?? DIFFICULTY.Medium;
+  const totalSteps = guide.steps.length;
+  const progress   = Math.round(((currentStep + 1) / totalSteps) * 100);
+  const isDone     = currentStep === totalSteps - 1;
 
   return (
     <div className="p-4 md:p-6 lg:p-8">
@@ -141,11 +154,11 @@ export default function GuideDetailPage() {
         ══════════════════════════════════════════════════════════════ */}
         <div className="bg-white rounded-3xl border border-slate-200 p-6 md:p-8 mb-6 shadow-sm">
 
-          {/* Top row: tags */}
+          {/* Tags row */}
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border ${diff.badge}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${diff.dot}`} />
-              {diff.label}
+              {guide.difficulty}
             </span>
             <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border bg-blue-50 text-blue-700 border-blue-200">
               <Zap size={10} /> {guide.category}
@@ -158,16 +171,63 @@ export default function GuideDetailPage() {
             </span>
           </div>
 
-          {/* Title + description */}
+          {/* Title */}
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight mb-2">
             {guide.title}
           </h1>
-          <p className="text-slate-500 text-sm leading-relaxed max-w-2xl mb-6">
-            {guide.description}
-          </p>
+
+          {/* Description — shown only if present (older format) */}
+          {guide.description && (
+            <p className="text-slate-500 text-sm leading-relaxed max-w-2xl mb-4">
+              {guide.description}
+            </p>
+          )}
+
+          {/* ── Diagnosis section — shown only if present (newer format) ── */}
+          {guide.diagnosis && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-5">
+
+              {/* Symptoms */}
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-7 h-7 bg-red-100 rounded-lg flex items-center justify-center">
+                    <Stethoscope size={14} className="text-red-600" />
+                  </div>
+                  <p className="text-xs font-black text-red-600 uppercase tracking-widest">Symptoms</p>
+                </div>
+                <ul className="space-y-2">
+                  {guide.diagnosis.symptoms.map((s, i) => (
+                    <li key={i} className="flex items-start gap-2.5 text-sm text-red-800 font-medium leading-snug">
+                      <CircleDot size={13} className="text-red-400 mt-0.5 shrink-0" />
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Possible Causes */}
+              <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-7 h-7 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <AlertTriangle size={14} className="text-orange-600" />
+                  </div>
+                  <p className="text-xs font-black text-orange-600 uppercase tracking-widest">Possible Causes</p>
+                </div>
+                <ul className="space-y-2">
+                  {guide.diagnosis.possibleCauses.map((c, i) => (
+                    <li key={i} className="flex items-start gap-2.5 text-sm text-orange-800 font-medium leading-snug">
+                      <CircleDot size={13} className="text-orange-400 mt-0.5 shrink-0" />
+                      {c}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+            </div>
+          )}
 
           {/* Progress strip */}
-          <div className="space-y-2">
+          <div className="space-y-2 mt-6">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                 Step {currentStep + 1} of {totalSteps}
@@ -208,7 +268,7 @@ export default function GuideDetailPage() {
           {/* ── Steps column ── */}
           <div className="lg:col-span-2 space-y-3">
 
-            {/* Video (if available) */}
+            {/* Video — only for older guides that have videoUrl */}
             {guide.videoUrl && (
               <div className="bg-slate-900 rounded-3xl overflow-hidden">
                 <div className="flex items-center gap-2 px-6 pt-5 pb-3">
@@ -244,6 +304,7 @@ export default function GuideDetailPage() {
                 >
                   {/* Card header — always visible */}
                   <div className="flex items-center gap-4 p-5">
+
                     {/* Step number badge */}
                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 font-black text-lg transition-all ${
                       isActive
@@ -252,23 +313,16 @@ export default function GuideDetailPage() {
                         ? 'bg-emerald-500 text-white'
                         : 'bg-slate-100 text-slate-400'
                     }`}>
-                      {isCompleted && !isActive
-                        ? <CheckCircle2 size={20} />
-                        : step.order
-                      }
+                      {isCompleted && !isActive ? <CheckCircle2 size={20} /> : step.order}
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <p className={`font-bold leading-tight ${
-                        isActive
-                          ? 'text-slate-900 text-lg'
-                          : isFuture
-                          ? 'text-slate-400 text-base'
-                          : 'text-slate-700 text-base'
+                        isActive ? 'text-slate-900 text-lg' : isFuture ? 'text-slate-400 text-base' : 'text-slate-700 text-base'
                       }`}>
                         {step.title}
                       </p>
-                      {/* Show tools tag inline on collapsed steps */}
+                      {/* Show tools on collapsed steps */}
                       {!isActive && step.tools && (
                         <p className="text-xs text-slate-400 font-medium mt-1 truncate">
                           🔧 {step.tools}
@@ -285,6 +339,7 @@ export default function GuideDetailPage() {
                   {/* ── Expanded content (active step only) ── */}
                   {isActive && (
                     <div className="px-6 pb-7 space-y-5">
+
                       {/* Divider */}
                       <div className="h-px bg-slate-100" />
 
@@ -300,7 +355,7 @@ export default function GuideDetailPage() {
                         </div>
                       )}
 
-                      {/* Tools used this step — prominent pill */}
+                      {/* Tools used this step */}
                       {step.tools && (
                         <div className="inline-flex items-center gap-2.5 bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5">
                           <Wrench size={15} className="text-slate-500 shrink-0" />
@@ -376,7 +431,9 @@ export default function GuideDetailPage() {
             )}
           </div>
 
-          {/* ── Sidebar ── */}
+          {/* ══════════════════════════════════════════════════════════════
+              SIDEBAR
+          ══════════════════════════════════════════════════════════════ */}
           <div className="space-y-4">
 
             {/* Tools card */}
@@ -385,9 +442,7 @@ export default function GuideDetailPage() {
                 <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center">
                   <Wrench size={14} className="text-blue-600" />
                 </div>
-                <h3 className="font-black text-slate-900 text-sm uppercase tracking-wide">
-                  Tools Required
-                </h3>
+                <h3 className="font-black text-slate-900 text-sm uppercase tracking-wide">Tools Required</h3>
                 <span className="ml-auto text-xs font-bold bg-slate-100 text-slate-500 w-6 h-6 rounded-full flex items-center justify-center">
                   {guide.tools.length}
                 </span>
@@ -411,9 +466,7 @@ export default function GuideDetailPage() {
                   <div className="w-7 h-7 bg-purple-50 rounded-lg flex items-center justify-center">
                     <Package size={14} className="text-purple-600" />
                   </div>
-                  <h3 className="font-black text-slate-900 text-sm uppercase tracking-wide">
-                    Parts Required
-                  </h3>
+                  <h3 className="font-black text-slate-900 text-sm uppercase tracking-wide">Parts Required</h3>
                   <span className="ml-auto text-xs font-bold bg-slate-100 text-slate-500 w-6 h-6 rounded-full flex items-center justify-center">
                     {guide.parts.length}
                   </span>
@@ -459,6 +512,7 @@ export default function GuideDetailPage() {
                 </Link>
               </div>
             </div>
+
           </div>
         </div>
       </div>
