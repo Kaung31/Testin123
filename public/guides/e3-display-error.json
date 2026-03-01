@@ -1,0 +1,69 @@
+{
+  "id": "e3-display-error",
+  "title": "Display Screen Replacement (E3 Error Fix)",
+  "model": "Air 3 to Air 5 Pro",
+  "difficulty": "Medium",
+  "time": "5-8 mins",
+  "category": "Electronics",
+  "description": "VCU Display replacement procedure for E3 communication error and power-on issues.",
+  "videoUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+  "tools": [
+    { "name": "Flathead Screwdriver" },
+    { "name": "Heat Shrink Cutter" },
+    { "name": "Heat Gun" },
+    { "name": "Protective Gloves" }
+  ],
+  "parts": [
+    { "name": "VCU Display Screen", "sku": "PSPUR0034-0001" },
+    { "name": "Heat Shrink Tubing", "sku": "CONSUMABLE" },
+    { "name": "Waterproof Rubber Band", "sku": "PSPUR-SEAL" }
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "title": "Remove Display Screen",
+      "desc": "Put the flathead screwdriver between screen and stem and take off screen.",
+      "tools": "Flathead screwdriver",
+      "image": ""
+    },
+    {
+      "order": 2,
+      "title": "Disconnect All Cables",
+      "desc": "There are five cables on display, unplug all of them. Throttle and brake lever cables are with heat shrink. Cut heat shrink with cutter.",
+      "tools": "Heat shrink cutter",
+      "warning": "Wear gloves to protect your hands from sharp edges.",
+      "image": ""
+    },
+    {
+      "order": 3,
+      "title": "Remove Old Display & Install New One",
+      "desc": "Pull out the display from the stem, then put new display in.",
+      "tip": "There is a grommet at the bottom of the stem - it is needed to put it back properly.",
+      "parts": "Display screen",
+      "image": ""
+    },
+    {
+      "order": 4,
+      "title": "Connect All Cables",
+      "desc": "All plugs are different types - if it's not correct, you cannot plug them. Plug them all in.",
+      "tip": "There are two indicator plugs that are the same type, but red color is RIGHT and white is LEFT.",
+      "image": ""
+    },
+    {
+      "order": 5,
+      "title": "Seal Throttle & Brake Connections",
+      "desc": "Throttle and brake plugs need heat shrink to protect from water.",
+      "tools": "Heat gun",
+      "parts": "Heat shrink",
+      "image": ""
+    },
+    {
+      "order": 6,
+      "title": "Final Assembly",
+      "desc": "Put a waterproof rubber band on display screen and put it back into the stem.",
+      "parts": "Rubber band",
+      "warning": "Don't forget the heat shrink and gasket rubber bands - common mistake!",
+      "image": ""
+    }
+  ]
+}

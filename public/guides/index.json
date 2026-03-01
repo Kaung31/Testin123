@@ -1,0 +1,38 @@
+[
+  {
+    "id": "e3-display-error",
+    "title": "Display Screen Replacement (E3 Error Fix)",
+    "model": "Air 3 to Air 5 Pro",
+    "difficulty": "Medium",
+    "time": "5-8 mins",
+    "category": "Electronics",
+    "description": "VCU Display replacement procedure for E3 communication error and power-on issues."
+  },
+  {
+    "id": "e2-throttle-error",
+    "title": "Throttle Replacement (E2/F2 Error Fix)",
+    "model": "Air 3 to Air 5 Pro",
+    "difficulty": "Hard",
+    "time": "10-13 mins",
+    "category": "Controls",
+    "description": "Complete throttle replacement procedure for E2/F2 throttle errors with cable routing."
+  },
+  {
+    "id": "e13-water-ingress",
+    "title": "Water Ingress Repair (Battery/MCU)",
+    "model": "Air 3 to Air 5 Pro",
+    "difficulty": "Hard",
+    "time": "45-60 mins",
+    "category": "Electronics",
+    "description": "Procedure for diagnosing and repairing water ingress (yellow/orange residue), including Battery and MCU replacement."
+  },
+  {
+    "id": "e3-display-cable-replacement",
+    "title": "Display Cable Replacement (Internal E3 Fix)",
+    "model": "Air 3 to Air 5 Pro",
+    "difficulty": "Hard",
+    "time": "30-45 mins",
+    "category": "Electronics",
+    "description": "Full internal wiring replacement. Required when the E3 error persists after a screen swap, indicating a cable break inside the steerer or frame."
+  }
+]

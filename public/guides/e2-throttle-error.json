@@ -1,0 +1,101 @@
+{
+  "id": "e2-throttle-error",
+  "title": "Throttle Replacement (E2/F2 Error Fix)",
+  "model": "Air 3 to Air 5 Pro",
+  "difficulty": "Hard",
+  "time": "10-13 mins",
+  "category": "Controls",
+  "description": "Complete throttle replacement procedure for E2/F2 throttle errors with cable routing.",
+  "videoUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+  "tools": [
+    { "name": "Small Flathead Screwdriver" },
+    { "name": "Hex Key 2mm" },
+    { "name": "Hex Key 3mm" },
+    { "name": "Small Hook Tool" }
+  ],
+  "parts": [
+    { "name": "Throttle (Metal Core)", "sku": "PSPUR0031-0002" }
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "title": "Open Display Screen",
+      "desc": "Use small flathead screwdriver to open the display screen cover.",
+      "tools": "Small flathead",
+      "image": ""
+    },
+    {
+      "order": 2,
+      "title": "Separate Cables from Grommet",
+      "desc": "Separate the throttle and right indicator cable from the cable organizing grommet.",
+      "tip": "Usually the far right two cables.",
+      "image": ""
+    },
+    {
+      "order": 3,
+      "title": "Remove Indicator Cover",
+      "desc": "Remove the indicator cover using flathead screwdriver.",
+      "tools": "Flathead",
+      "image": ""
+    },
+    {
+      "order": 4,
+      "title": "Remove Right Indicator",
+      "desc": "Unbolt 3 bolts and pull out the cable.",
+      "tools": "Hex 2mm",
+      "tip": "Keep the bolts safe - you'll need them for reassembly.",
+      "image": ""
+    },
+    {
+      "order": 5,
+      "title": "Remove Hand Grip",
+      "desc": "Pull it out from the handlebar.",
+      "tip": "May need to twist while pulling if it's tight.",
+      "image": ""
+    },
+    {
+      "order": 6,
+      "title": "Remove Old Throttle",
+      "desc": "Just loosen the bolt to remove the throttle.",
+      "tools": "Hex 3mm",
+      "image": ""
+    },
+    {
+      "order": 7,
+      "title": "Install New Throttle Cable",
+      "desc": "Put the cable into the front hole, take the cable out by using the small hook tool, then tighten the bolt enough.",
+      "tools": "Small hook, Hex 3mm",
+      "warning": "This is the tricky part - use the hook to grab the cable loop inside the stem.",
+      "parts": "New throttle (Metal core)",
+      "image": ""
+    },
+    {
+      "order": 8,
+      "title": "Reinstall Hand Grip",
+      "desc": "Put the handgrip back onto the handlebar.",
+      "image": ""
+    },
+    {
+      "order": 9,
+      "title": "Reinstall Right Indicator",
+      "desc": "Put the cable into the big hole, take the cable out by using the hook tool.",
+      "tools": "Small hook",
+      "image": ""
+    },
+    {
+      "order": 10,
+      "title": "Replace Indicator Cover",
+      "desc": "Put the indicator cover back.",
+      "warning": "Do not cover the reflection line on indicator.",
+      "image": ""
+    },
+    {
+      "order": 11,
+      "title": "Final Cable Management",
+      "desc": "Put the indicator and throttle cable back into the cable organizing grommet.",
+      "tip": "Indicator cable should be far right and throttle cable next to it.",
+      "warning": "COMMON MISTAKE: Don't forget to tighten the throttle screw back and put the indicator first before handgrip!",
+      "image": ""
+    }
+  ]
+}
