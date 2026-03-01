@@ -2,7 +2,7 @@
   "id": "e3-display-cable-replacement",
   "title": "Display Cable Replacement (Internal E3 Fix)",
   "model": "Air 3 to Air 5 Pro",
-  "difficulty": "Hard",
+  "difficulty": "Easy",
   "time": "30-45 mins",
   "category": "Electronics",
   "description": "Full internal wiring replacement. Required when the E3 error persists after a screen swap, indicating a cable break inside the steerer or frame.",
@@ -12,7 +12,7 @@
     { "name": "Hex Key 3mm" },
     { "name": "Pliers" },
     { "name": "Small Flathead Screwdriver" },
-    { "name": "Utility Knife" }
+    { "name": "Cutter Tool" }
   ],
   "parts": [
     { "name": "Main Display Cable (Internal)", "sku": "PSPUR-CABLE-E3" },
