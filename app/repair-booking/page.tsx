@@ -101,7 +101,7 @@ export default function RepairBookingPage() {
   });
 
   // Calculate warranty status based on purchase date
-  const calculateWarrantyStatus = (purchaseDate) => {
+  const calculateWarrantyStatus = (purchaseDate: string) => {
     if (!purchaseDate) return null;
     const purchase = new Date(purchaseDate);
     const now = new Date();
