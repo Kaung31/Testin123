@@ -46,6 +46,12 @@ export default function HomePage() {
             <Link href="/models" className="bg-white text-black px-8 py-4 rounded-full font-bold hover:scale-105 transition-transform flex items-center gap-2">
               Select Model <ArrowRight size={20} />
             </Link>
+            
+            {/* 🔧 NEW: REPAIR BOOKING BUTTON */}
+            <Link href="/repair-booking" className="bg-blue-500 text-white px-8 py-4 rounded-full font-bold hover:scale-105 transition-transform flex items-center gap-2 shadow-lg shadow-blue-500/50">
+              🔧 Book Repair <ArrowRight size={20} />
+            </Link>
+            
             <div className="relative">
               <Search className="absolute left-4 top-4 text-gray-500" size={20} />
               <input 
@@ -65,16 +71,13 @@ export default function HomePage() {
            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[100px]" />
            
            {/* THE FLOATING SCOOTER */}
-           {/* IMPORTANT: Upload a real scooter PNG to public/images/hero-scooter.png */}
            <div className="relative z-10 w-full max-w-lg">
              <img 
                src="/images/hero-scooter.png" 
                alt="Pure Electric Scooter" 
                className="w-full h-auto object-contain scooter-3d-model"
-               // Fallback if image missing:
                onError={(e) => {
                  e.currentTarget.style.display = 'none';
-                 // FIXED: Check if parentElement exists before accessing it
                  if (e.currentTarget.parentElement) {
                     e.currentTarget.parentElement.innerHTML = '<div class="text-center p-10 border-4 border-dashed border-white/20 rounded-xl"><p class="font-bold text-gray-500">UPLOAD /images/hero-scooter.png</p></div>';
                  }
@@ -103,6 +106,21 @@ export default function HomePage() {
         <div className="bg-blue-600 p-6 rounded-[2rem] shadow-lg shadow-blue-200 text-white flex flex-col justify-center items-center cursor-pointer hover:bg-blue-700 transition-colors">
           <CheckCircle2 size={32} className="mb-2" />
           <p className="font-bold">System Normal</p>
+        </div>
+      </div>
+
+      {/* 🔧 NEW: REPAIR BOOKING SECTION */}
+      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-[2.5rem] p-8 md:p-12 text-white shadow-xl">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-black mb-2">Need a Repair?</h2>
+            <p className="text-blue-100 text-lg">Book your scooter repair in just a few steps. Professional service in 7-10 days.</p>
+          </div>
+          <Link href="/repair-booking">
+            <button className="bg-white text-blue-600 px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transition-transform shadow-lg whitespace-nowrap flex items-center gap-2">
+              🔧 Book a Repair Now <ArrowRight size={20} />
+            </button>
+          </Link>
         </div>
       </div>
 
