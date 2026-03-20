@@ -40,7 +40,7 @@ interface CostItem {
 interface CostEstimate {
   total: number;
   items: CostItem[];
-  isWarranty: boolean;
+  isWarranty: boolean | null;
 }
 
 // Steps in the repair booking process
