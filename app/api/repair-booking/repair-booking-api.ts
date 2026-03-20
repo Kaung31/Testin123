@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     // Send email
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
-      to: process.env.CS_TEAM_EMAIL, // CS team email
+      to: process.env.EMAIL_USER, // ← Changed! Now sends to your email
       subject: `🔧 New Repair Booking - ${data.scooterModel} - ${data.customerName}`,
       html: emailHTML,
     });
