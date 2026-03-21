@@ -1,35 +1,25 @@
-// app/api/repair-booking/route.ts
+// app/api/repair-booking/route.ts (RESEND VERSION)
 import { NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: Request) {
   try {
     const data = await request.json();
     
-    // Create email transporter (using Gmail as example)
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER, // your-email@gmail.com
-        pass: process.env.EMAIL_PASSWORD, // your app password
-      },
-    });
-
-    // Format the email content
-    const emailHTML = generateEmailHTML(data);
-    
-    // Send email
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: process.env.CS_TEAM_EMAIL, // CS team email
+    // Send email to CS team
+    await resend.emails.send({
+      from: `Pure Electric <${process.env.FROM_EMAIL}>`,
+      to: [process.env.FROM_EMAIL!], // Send to yourself
       subject: `🔧 New Repair Booking - ${data.scooterModel} - ${data.customerName}`,
-      html: emailHTML,
+      html: generateEmailHTML(data),
     });
 
-    // Also send confirmation to customer
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: data.customerEmail,
+    // Send confirmation to customer
+    await resend.emails.send({
+      from: `Pure Electric <${process.env.FROM_EMAIL}>`,
+      to: [data.customerEmail],
       subject: '✓ Your Pure Electric Repair Booking Confirmation',
       html: generateCustomerConfirmationHTML(data),
     });
@@ -38,7 +28,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error sending email:', error);
     return NextResponse.json(
-      { error: 'Failed to submit booking' },
+      { error: 'Failed to send email' },
       { status: 500 }
     );
   }
@@ -64,8 +54,7 @@ function generateEmailHTML(data: any) {
         .cost-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
         .cost-table td { padding: 8px; border-bottom: 1px solid #ddd; }
         .total { font-size: 1.2em; font-weight: bold; color: #3B82F6; }
-        .photo-list { list-style: none; padding: 0; }
-        .photo-list li { padding: 5px 0; }
+        .photo-link { display: inline-block; padding: 8px 16px; background: #3B82F6; color: white; text-decoration: none; border-radius: 5px; margin: 5px; }
       </style>
     </head>
     <body>
@@ -147,6 +136,24 @@ function generateEmailHTML(data: any) {
           </p>
         </div>
 
+        <!-- Photos & Videos -->
+        ${data.photoUrls && data.photoUrls.length > 0 ? `
+          <div class="section">
+            <h2>📷 Uploaded Photos & Videos (${data.photoUrls.length})</h2>
+            <p style="margin-bottom: 15px;">Click the links below to view:</p>
+            <div>
+              ${data.photoUrls.map((url: string, index: number) => {
+                const isVideo = url.includes('/video/upload/');
+                return `
+                  <a href="${url}" target="_blank" class="photo-link">
+                    ${isVideo ? '🎥' : '📷'} ${isVideo ? 'Video' : 'Photo'} ${index + 1}
+                  </a>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        ` : ''}
+
         <!-- Booking Details -->
         <div class="section">
           <h2>📅 Booking Details</h2>
@@ -182,20 +189,12 @@ function generateEmailHTML(data: any) {
           `}
         </div>
 
-        <!-- Photos -->
-        ${data.photos.length > 0 ? `
-          <div class="section">
-            <h2>📷 Uploaded Photos</h2>
-            <p>${data.photos.length} photo(s) uploaded (see attachments)</p>
-          </div>
-        ` : ''}
-
         <!-- Next Steps -->
         <div class="section">
           <h2>✅ Next Steps for CS Team</h2>
           <ol>
-            <li>Review booking details above</li>
-            <li>Check photos and verify issue description</li>
+            <li>Review booking details and photos above</li>
+            <li>Verify issue description</li>
             <li>Contact customer at <strong>${data.customerEmail}</strong> or <strong>${data.customerPhone}</strong></li>
             <li>${data.serviceType === 'collection' ? 'Arrange courier pickup' : 'Confirm drop-off appointment'}</li>
             <li>Update customer on repair timeline (7-10 working days)</li>
@@ -219,8 +218,6 @@ function generateCustomerConfirmationHTML(data: any) {
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background: #3B82F6; color: white; padding: 20px; border-radius: 10px; text-align: center; }
         .section { margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; }
-        .label { font-weight: bold; }
-        .button { display: inline-block; padding: 12px 24px; background: #3B82F6; color: white; text-decoration: none; border-radius: 8px; margin-top: 15px; }
       </style>
     </head>
     <body>
@@ -261,7 +258,6 @@ function generateCustomerConfirmationHTML(data: any) {
           <h3>Need Help?</h3>
           <p>Contact our support team:</p>
           <p>📧 Email: support@pureelectric.com</p>
-          <p>📞 Phone: [Your phone number]</p>
         </div>
 
         <p style="text-align: center; color: #666; font-size: 0.9em; margin-top: 30px;">
