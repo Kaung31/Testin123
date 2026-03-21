@@ -10,17 +10,17 @@ export async function POST(request: Request) {
     
     // Send email to CS team
     await resend.emails.send({
-      from: `Pure Electric <${process.env.FROM_EMAIL}>`,
-      to: [process.env.FROM_EMAIL!], // Send to yourself
+      from: `Testing CP <${process.env.FROM_EMAIL}>`,
+      to: [process.env.CS_TEAM_EMAIL!], // Send to yourself
       subject: `🔧 New Repair Booking - ${data.scooterModel} - ${data.customerName}`,
       html: generateEmailHTML(data),
     });
 
     // Send confirmation to customer
     await resend.emails.send({
-      from: `Pure Electric <${process.env.FROM_EMAIL}>`,
+      from: `Testing CP <${process.env.FROM_EMAIL}>`,
       to: [data.customerEmail],
-      subject: '✓ Your Pure Electric Repair Booking Confirmation',
+      subject: '✓ Your Testing CP Repair Booking Confirmation',
       html: generateCustomerConfirmationHTML(data),
     });
 
@@ -257,7 +257,7 @@ function generateCustomerConfirmationHTML(data: any) {
         <div class="section">
           <h3>Need Help?</h3>
           <p>Contact our support team:</p>
-          <p>📧 Email: support@pureelectric.com</p>
+          <p>📧 Email: support@p#####.com</p>
         </div>
 
         <p style="text-align: center; color: #666; font-size: 0.9em; margin-top: 30px;">
