@@ -567,9 +567,6 @@ export default function RepairBookingPage() {
               Next Step <ChevronRight size={20} />
             </button>
           ) : (
-            <button disabled={!canProceed()} className={`flex-1 px-6 py-4 rounded-xl font-bold text-white transition-all shadow-lg ${canProceed() ? 'bg-green-600 hover:bg-green-700' : 'bg-slate-300 cursor-not-allowed'}`}>
-              {formData.paymentOption === 'pay-now' ? `Pay £${costEstimate.deposit} & Book` : 'Confirm Booking'}
-            </button>
             <button 
               onClick={handleSubmit} 
               disabled={!canProceed()} 
