@@ -8,49 +8,26 @@ export async function POST(request: Request) {
   try {
     const data = await request.json();
     
-    console.log('=== REPAIR BOOKING SUBMISSION ===');
-    console.log('Customer name:', data.customerName);
-    console.log('Customer email:', data.customerEmail);
-    
-    // Send email to CS team
-    try {
-      const csEmail = await resend.emails.send({
-        from: `Testing CP <${process.env.FROM_EMAIL}>`,
-        to: [process.env.CS_TEAM_EMAIL!],
-        subject: `🔧 New Repair Booking - ${data.scooterModel} - ${data.customerName}`,
-        html: generateEmailHTML(data),
-      });
-      console.log('✅ CS email sent successfully:', csEmail);
-    } catch (error) {
-      console.error('❌ CS email failed:', error);
-      throw error;
-    }
+    // Send email to CS team (YOUR EMAIL!)
+    await resend.emails.send({
+      from: `Testing Company <${process.env.FROM_EMAIL}>`,  // ✅ Changed name
+      to: [process.env.CS_TEAM_EMAIL!],  // ✅ Changed to your email
+      subject: `🔧 New Repair Booking - ${data.scooterModel} - ${data.customerName}`,
+      html: generateEmailHTML(data),
+    });
 
     // Send confirmation to customer
-    if (!data.customerEmail) {
-      console.error('❌ Customer email is missing!');
-      return NextResponse.json(
-        { error: 'Customer email is required' },
-        { status: 400 }
-      );
-    }
-
-    try {
-      const customerEmail = await resend.emails.send({
-        from: `Testing CP <${process.env.FROM_EMAIL}>`,
-        to: [data.customerEmail],
-        subject: '✓ Your Testing CP Repair Booking Confirmation',
-        html: generateCustomerConfirmationHTML(data),
-      });
-      console.log('✅ Customer email sent successfully:', customerEmail);
-    } catch (error) {
-      console.error('❌ Customer email failed:', error);
-      // Don't throw - CS email already sent
-    }
+    await resend.emails.send({
+      from: `Testing Company <${process.env.FROM_EMAIL}>`,  // ✅ Changed name
+      // to: [data.customerEmail],
+      to: [process.env.CS_TEAM_EMAIL!],
+      subject: '✓ Your Testing Company Repair Booking Confirmation',  // ✅ Changed subject
+      html: generateCustomerConfirmationHTML(data),
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('❌ API Error:', error);
+    console.error('Error sending email:', error);
     return NextResponse.json(
       { error: 'Failed to send email' },
       { status: 500 }
