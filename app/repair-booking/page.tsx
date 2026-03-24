@@ -178,6 +178,32 @@ export default function RepairBookingPage() {
       };
     });
   };
+  const handleSubmit = async () => {
+    try {
+      // Note: Make sure this URL matches your actual API route (e.g., '/api/repair-booking' or '/api/send')
+      const response = await fetch('/api/repair-booking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          estimatedTotal: costEstimate.total,
+          depositRequired: costEstimate.deposit,
+          isWarranty: isWarrantyValid,
+          submittedAt: new Date().toISOString(),
+        }),
+      });
+      
+      if (response.ok) {
+        alert('Booking submitted successfully! You will receive a confirmation email shortly.');
+        // Optional: Redirect user or reset form here
+      } else {
+        alert('Error submitting booking. Please try again.');
+      }
+    } catch (error) {
+      console.error('Submission error:', error);
+      alert('Error submitting booking. Please try again.');
+    }
+  };
 
   // --- Validation ---
   const canProceed = () => {
@@ -542,6 +568,13 @@ export default function RepairBookingPage() {
             </button>
           ) : (
             <button disabled={!canProceed()} className={`flex-1 px-6 py-4 rounded-xl font-bold text-white transition-all shadow-lg ${canProceed() ? 'bg-green-600 hover:bg-green-700' : 'bg-slate-300 cursor-not-allowed'}`}>
+              {formData.paymentOption === 'pay-now' ? `Pay £${costEstimate.deposit} & Book` : 'Confirm Booking'}
+            </button>
+            <button 
+              onClick={handleSubmit} 
+              disabled={!canProceed()} 
+              className={`flex-1 px-6 py-4 rounded-xl font-bold text-white transition-all shadow-lg ${canProceed() ? 'bg-green-600 hover:bg-green-700' : 'bg-slate-300 cursor-not-allowed'}`}
+            >
               {formData.paymentOption === 'pay-now' ? `Pay £${costEstimate.deposit} & Book` : 'Confirm Booking'}
             </button>
           )}
