@@ -19,8 +19,8 @@ export async function POST(request: Request) {
     // Send confirmation to customer
     await resend.emails.send({
       from: `Testing Company <${process.env.FROM_EMAIL}>`,  // ✅ Changed name
-      // to: [data.customerEmail],
-      to: [process.env.CS_TEAM_EMAIL!],
+      to: [data.customerEmail],
+      // to: [process.env.CS_TEAM_EMAIL!],
       subject: '✓ Your Testing Company Repair Booking Confirmation',  // ✅ Changed subject
       html: generateCustomerConfirmationHTML(data),
     });
