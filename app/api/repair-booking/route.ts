@@ -7,6 +7,11 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export async function POST(request: Request) {
   try {
     const data = await request.json();
+
+    // ADD THIS DEBUG LINE:
+    console.log('Customer email:', data.customerEmail);
+    console.log('Full data:', data);
+
     
     // Send email to CS team
     await resend.emails.send({
@@ -16,6 +21,10 @@ export async function POST(request: Request) {
       html: generateEmailHTML(data),
     });
 
+    // ADD THIS DEBUG LINE:
+    console.log('About to send customer confirmation to:', data.customerEmail);
+    
+
     // Send confirmation to customer
     await resend.emails.send({
       from: `Testing CP <${process.env.FROM_EMAIL}>`,
@@ -23,6 +32,11 @@ export async function POST(request: Request) {
       subject: '✓ Your Testing CP Repair Booking Confirmation',
       html: generateCustomerConfirmationHTML(data),
     });
+
+
+    // ADD THIS DEBUG LINE:
+    console.log('Customer email result:', customerEmailResult);
+    
 
     return NextResponse.json({ success: true });
   } catch (error) {
