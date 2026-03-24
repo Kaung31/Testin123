@@ -1,375 +1,283 @@
 "use client";
 
-import React, { useState } from 'react';
-import { ChevronRight, ChevronLeft, Check, AlertCircle, Upload, Calendar } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { ChevronRight, ChevronLeft, Check, AlertCircle, Upload, Calendar, MapPin, Wrench, ShieldAlert } from 'lucide-react';
 
-// Types
+// --- Types ---
 interface FormData {
-  scooterModel: string;
-  purchaseDate: string;
+  model: string;
   serialNumber: string;
-  underWarranty: boolean | null;
+  purchaseDate: string;
   hadAccident: boolean | null;
   issueCategories: string[];
-  selectedErrorCodes: string[];
-  selectedDamageParts: string[];
-  selectedPerformanceIssues: string[];
+  errorCodes: string[];
+  damageParts: string[];
+  noiseIssues: string[];
   otherDescription: string;
-  scooterRideable: boolean | null;
-  fixAllIssues: boolean;
-  selectedIssues: string[];
+  rideable: boolean | null;
+  fixAll: boolean | null;
+  selectedRepairs: string[];
   photos: File[];
-  serviceType: string;
-  preferredDate: string;
+  serviceType: 'drop-off' | 'collection' | '';
+  bookingDate: string;
   timeSlot: string;
+  addressLine1: string;
+  city: string;
+  postalCode: string;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
-  addressLine1: string;
-  addressLine2: string;
-  city: string;
-  postalCode: string;
-  paymentOption: string;
+  paymentOption: 'pay-now' | 'pay-later' | '';
 }
 
-interface CostItem {
-  item: string;
-  cost: number;
-}
-
-interface CostEstimate {
-  total: number;
-  items: CostItem[];
-  isWarranty: boolean | null;
-}
-
-// Steps in the repair booking process
 const STEPS = [
   'Scooter Info',
+  'Warranty Check',
   'Issue Type',
-  'Details',
+  'Specifics',
+  'Repair Plan',
   'Photos',
   'Booking',
-  'Contact',
+  'Details',
   'Summary'
 ];
 
-// Scooter models
-const SCOOTER_MODELS = [
-  'Pure Air Gen 3',
-  'Pure Air Pro',
-  'Pure Air Gen 4',
-  'Pure Air Pro Gen 4',
-  'Pure Advance',
-  'Air Go'
-];
+const SCOOTER_MODELS = ['Pure Air Gen 3', 'Pure Air Pro', 'Pure Air Gen 4', 'Pure Air Pro Gen 4', 'Pure Advance', 'Air Go'];
+const ERROR_CODES = ['E1', 'E2', 'F2', 'E3', 'E4', 'E7', 'E13'];
+const DAMAGE_PARTS = ['Tyre(s)', 'Mudguard(s)', 'Handlebar/Stem', 'Brake(s)'];
+const NOISE_ISSUES = ['Noise when turning (bearing)', 'Battery/power issue', 'Electrical fault (no code)'];
 
-// Error codes with descriptions
-const ERROR_CODES = [
-  { code: 'E1', name: 'Brake Error', severity: 'high' },
-  { code: 'E2', name: 'Throttle Error', severity: 'high' },
-  { code: 'F2', name: 'Throttle Error (Startup)', severity: 'high' },
-  { code: 'E3', name: 'Communication Error', severity: 'critical' },
-  { code: 'E4', name: 'Motor Overcurrent', severity: 'high' },
-  { code: 'E7', name: 'Motor Hall Sensor', severity: 'high' },
-  { code: 'E13', name: 'Battery Comms Error', severity: 'high' },
-];
+// Base prices based on PDF estimates
+const PRICE_MAP: Record<string, number> = {
+  'Tyre(s)': 35,
+  'Mudguard(s)': 35,
+  'Handlebar/Stem': 40,
+  'Brake(s)': 20,
+  'Collection Fee': 20,
+  'Diagnostic Fee': 20
+};
 
-// Physical damage options
-const DAMAGE_PARTS = [
-  'Tyre(s)',
-  'Mudguard(s)',
-  'Handlebar',
-  'Stem (steering column)',
-  'Brake(s)',
-  'Other'
-];
-
-// Performance issues
-const PERFORMANCE_ISSUES = [
-  'Noise when turning (bearing issue)',
-  'Slow acceleration',
-  'Battery draining fast',
-  'Other performance issue'
-];
+// Items never covered by warranty
+const EXCLUDED_FROM_WARRANTY = ['Tyre(s)', 'Mudguard(s)', 'Brake(s)'];
 
 export default function RepairBookingPage() {
-  const [currentStep, setCurrentStep] = useState<number>(0);
+  const [step, setStep] = useState<number>(0);
   const [formData, setFormData] = useState<FormData>({
-    scooterModel: '',
-    purchaseDate: '',
+    model: '',
     serialNumber: '',
-    underWarranty: null,
+    purchaseDate: '',
     hadAccident: null,
     issueCategories: [],
-    selectedErrorCodes: [],
-    selectedDamageParts: [],
-    selectedPerformanceIssues: [],
+    errorCodes: [],
+    damageParts: [],
+    noiseIssues: [],
     otherDescription: '',
-    scooterRideable: null,
-    fixAllIssues: true,
-    selectedIssues: [],
+    rideable: null,
+    fixAll: true,
+    selectedRepairs: [],
     photos: [],
     serviceType: '',
-    preferredDate: '',
+    bookingDate: '',
     timeSlot: '',
+    addressLine1: '',
+    city: '',
+    postalCode: '',
     customerName: '',
     customerEmail: '',
     customerPhone: '',
-    addressLine1: '',
-    addressLine2: '',
-    city: '',
-    postalCode: '',
-    paymentOption: '',
+    paymentOption: ''
   });
 
-  // Calculate warranty status based on purchase date
-  const calculateWarrantyStatus = (purchaseDate: string): boolean | null => {
-    if (!purchaseDate) return null;
-    const purchase = new Date(purchaseDate);
+  // --- Logic & Calculations ---
+  
+  // 1. Calculate Core Warranty (12 months AND no accidents)
+  const isWarrantyValid = useMemo(() => {
+    if (!formData.purchaseDate) return false;
+    const purchase = new Date(formData.purchaseDate);
     const now = new Date();
-    const monthsDiff = (now.getTime() - purchase.getTime()) / (1000 * 60 * 60 * 24 * 30);
-    return monthsDiff <= 12;
-  };
+    const diffMonths = (now.getFullYear() - purchase.getFullYear()) * 12 + (now.getMonth() - purchase.getMonth());
+    
+    // PDF Logic: Voided if > 12 months OR if crashed
+    return diffMonths <= 12 && formData.hadAccident === false;
+  }, [formData.purchaseDate, formData.hadAccident]);
 
-  // Calculate estimated cost
-  const calculateEstimatedCost = (): CostEstimate => {
-    let total = 0;
-    const items: CostItem[] = [];
-    
-    const isWarranty = formData.underWarranty && !formData.hadAccident;
-    
-    if (!isWarranty) {
-      total += 40;
-      items.push({ item: 'Diagnostic Fee', cost: 40 });
+  // 2. Aggregate all reported issues into a single array
+  const allReportedIssues = useMemo(() => {
+    return [
+      ...formData.errorCodes.map(c => `Error: ${c}`),
+      ...formData.damageParts,
+      ...formData.noiseIssues,
+      ...(formData.otherDescription ? ['Other Issue'] : [])
+    ];
+  }, [formData.errorCodes, formData.damageParts, formData.noiseIssues, formData.otherDescription]);
+
+  // 3. Auto-select repairs if "Fix All" is true
+  React.useEffect(() => {
+    if (formData.fixAll) {
+      setFormData(prev => ({ ...prev, selectedRepairs: allReportedIssues }));
+    } else if (formData.fixAll === false && formData.selectedRepairs.length === allReportedIssues.length) {
+       // Reset if they switch to "No"
+       setFormData(prev => ({ ...prev, selectedRepairs: [] }));
     }
-    
-    formData.selectedDamageParts.forEach((part: string) => {
-      if (part === 'Tyre(s)') {
-        total += 40;
-        items.push({ item: 'Tyre Replacement', cost: 40 });
-      } else if (part === 'Mudguard(s)') {
-        total += 35;
-        items.push({ item: 'Mudguard Replacement', cost: 35 });
+  }, [formData.fixAll, allReportedIssues]);
+
+  // 4. Calculate Final Costs
+  const costEstimate = useMemo(() => {
+    let total = 0;
+    const items: { name: string, cost: number, covered: boolean }[] = [];
+    let requiresDiagnosticFee = !isWarrantyValid;
+
+    formData.selectedRepairs.forEach(repair => {
+      const baseCost = PRICE_MAP[repair] || 0;
+      const isWearPart = EXCLUDED_FROM_WARRANTY.includes(repair);
+      
+      // If it's a wear part, or warranty is void, they pay for the part
+      if (!isWarrantyValid || isWearPart) {
+        if (baseCost > 0) {
+          total += baseCost;
+          items.push({ name: repair, cost: baseCost, covered: false });
+        }
+      } else {
+        // Covered by warranty
+        items.push({ name: repair, cost: 0, covered: true });
       }
     });
-    
+
+    // Add Diagnostic fee if out of warranty
+    if (requiresDiagnosticFee) {
+      total += PRICE_MAP['Diagnostic Fee'];
+      items.push({ name: 'Diagnostic Fee', cost: PRICE_MAP['Diagnostic Fee'], covered: false });
+    }
+
+    // Add Collection fee if applicable
     if (formData.serviceType === 'collection') {
-      total += 20;
-      items.push({ item: 'Collection Fee', cost: 20 });
+      total += PRICE_MAP['Collection Fee'];
+      items.push({ name: 'Courier Collection', cost: PRICE_MAP['Collection Fee'], covered: false });
     }
-    
-    return { total, items, isWarranty };
-  };
 
-  const updateFormData = (field: keyof FormData, value: any): void => {
+    // Calculate Deposit (Diagnostic + Courier if applicable)
+    let deposit = 0;
+    if (requiresDiagnosticFee) deposit += 20;
+    if (formData.serviceType === 'collection') deposit += 20;
+
+    return { total, items, deposit };
+  }, [formData.selectedRepairs, isWarrantyValid, formData.serviceType]);
+
+  // --- Handlers ---
+
+  const update = (field: keyof FormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
-    if (field === 'purchaseDate') {
-      const warranty = calculateWarrantyStatus(value);
-      setFormData(prev => ({ ...prev, underWarranty: warranty }));
+  };
+
+  const toggleArrayItem = (field: keyof FormData, value: string) => {
+    setFormData(prev => {
+      const arr = prev[field] as string[];
+      return {
+        ...prev,
+        [field]: arr.includes(value) ? arr.filter(i => i !== value) : [...arr, value]
+      };
+    });
+  };
+
+  // --- Validation ---
+  const canProceed = () => {
+    switch (step) {
+      case 0: return formData.model !== '';
+      case 1: return formData.purchaseDate !== '' && formData.hadAccident !== null;
+      case 2: return formData.issueCategories.length > 0;
+      case 3: 
+        const hasSpecifics = formData.errorCodes.length > 0 || formData.damageParts.length > 0 || formData.noiseIssues.length > 0 || formData.otherDescription !== '';
+        return hasSpecifics && formData.rideable !== null;
+      case 4: return formData.selectedRepairs.length > 0;
+      case 5: return true; // Photos optional
+      case 6: 
+        if (!formData.serviceType) return false;
+        if (formData.serviceType === 'drop-off') return formData.bookingDate !== '' && formData.timeSlot !== '';
+        return formData.bookingDate !== '' && formData.addressLine1 !== '' && formData.city !== '' && formData.postalCode !== '';
+      case 7: return formData.customerName !== '' && formData.customerEmail !== '';
+      case 8: return formData.paymentOption !== '';
+      default: return true;
     }
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    const files = e.target.files ? Array.from(e.target.files) : [];
-    setFormData(prev => ({
-      ...prev,
-      photos: [...prev.photos, ...files]
-    }));
+  const nextStep = () => {
+    if (canProceed()) setStep(s => s + 1);
   };
 
-  const removePhoto = (index: number): void => {
-    setFormData(prev => ({
-      ...prev,
-      photos: prev.photos.filter((_, i) => i !== index)
-    }));
-  };
-
-  const nextStep = (): void => {
-    if (currentStep < STEPS.length - 1) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const prevStep = (): void => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const handleSubmit = async (): Promise<void> => {
-    const cost = calculateEstimatedCost();
-    
-    const emailData = {
-      ...formData,
-      estimatedCost: cost,
-      submittedAt: new Date().toISOString(),
-    };
-    
-    try {
-      const response = await fetch('/api/repair-booking', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(emailData),
-      });
-      
-      if (response.ok) {
-        alert('Booking submitted successfully! You will receive a confirmation email shortly.');
-      } else {
-        alert('Error submitting booking. Please try again.');
-      }
-    } catch (error) {
-      console.error('Submission error:', error);
-      alert('Error submitting booking. Please try again.');
-    }
-  };
-
-  const renderStepContent = (): JSX.Element => {
-    switch (currentStep) {
-      case 0: // Scooter Info
+  // --- Step Rendering ---
+  const renderStep = () => {
+    switch (step) {
+      case 0:
         return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Scooter Information</h2>
-            
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+            <h2 className="text-2xl font-bold">Scooter Identification</h2>
             <div>
               <label className="block font-semibold mb-2">Scooter Model *</label>
-              <select
-                value={formData.scooterModel}
-                onChange={(e) => updateFormData('scooterModel', e.target.value)}
-                className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none"
-              >
+              <select value={formData.model} onChange={(e) => update('model', e.target.value)} className="w-full p-4 border-2 border-slate-200 rounded-xl focus:border-blue-500 bg-white">
                 <option value="">Select your model</option>
-                {SCOOTER_MODELS.map(model => (
-                  <option key={model} value={model}>{model}</option>
-                ))}
+                {SCOOTER_MODELS.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
-
-            <div>
-              <label className="block font-semibold mb-2">Purchase Date *</label>
-              <input
-                type="date"
-                value={formData.purchaseDate}
-                onChange={(e) => updateFormData('purchaseDate', e.target.value)}
-                max={new Date().toISOString().split('T')[0]}
-                className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none"
-              />
-              {formData.underWarranty !== null && (
-                <p className={`mt-2 text-sm ${formData.underWarranty ? 'text-green-600' : 'text-red-600'}`}>
-                  {formData.underWarranty ? '✓ Within 12-month warranty' : '✗ Outside warranty period'}
-                </p>
-              )}
-            </div>
-
             <div>
               <label className="block font-semibold mb-2">Serial Number (optional)</label>
-              <input
-                type="text"
-                value={formData.serialNumber}
-                onChange={(e) => updateFormData('serialNumber', e.target.value)}
-                placeholder="Found on underside of scooter"
-                className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none"
-              />
+              <input type="text" value={formData.serialNumber} onChange={(e) => update('serialNumber', e.target.value)} placeholder="Found on underside of deck" className="w-full p-4 border-2 border-slate-200 rounded-xl focus:border-blue-500" />
             </div>
+          </div>
+        );
 
+      case 1:
+        return (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+            <h2 className="text-2xl font-bold">Warranty Check</h2>
             <div>
-              <label className="block font-semibold mb-2">Has the scooter been in an accident? *</label>
+              <label className="block font-semibold mb-2">Purchase Date *</label>
+              <input type="date" value={formData.purchaseDate} max={new Date().toISOString().split('T')[0]} onChange={(e) => update('purchaseDate', e.target.value)} className="w-full p-4 border-2 border-slate-200 rounded-xl focus:border-blue-500" />
+              <p className="text-sm text-slate-500 mt-2">Your 12-month warranty starts from this date.</p>
+            </div>
+            <div>
+              <label className="block font-semibold mb-2">Has your scooter been in an accident or dropped? *</label>
               <div className="flex gap-4">
-                <button
-                  onClick={() => updateFormData('hadAccident', true)}
-                  className={`flex-1 p-4 border-2 rounded-xl font-semibold transition-all ${
-                    formData.hadAccident === true
-                      ? 'border-red-500 bg-red-50 text-red-700'
-                      : 'border-slate-200 hover:border-red-300'
-                  }`}
-                >
-                  Yes
-                </button>
-                <button
-                  onClick={() => updateFormData('hadAccident', false)}
-                  className={`flex-1 p-4 border-2 rounded-xl font-semibold transition-all ${
-                    formData.hadAccident === false
-                      ? 'border-green-500 bg-green-50 text-green-700'
-                      : 'border-slate-200 hover:border-green-300'
-                  }`}
-                >
-                  No
-                </button>
+                <button onClick={() => update('hadAccident', true)} className={`flex-1 p-4 border-2 rounded-xl font-semibold transition-all ${formData.hadAccident === true ? 'border-red-500 bg-red-50 text-red-700' : 'border-slate-200 hover:border-red-300'}`}>Yes</button>
+                <button onClick={() => update('hadAccident', false)} className={`flex-1 p-4 border-2 rounded-xl font-semibold transition-all ${formData.hadAccident === false ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 hover:border-green-300'}`}>No</button>
               </div>
               {formData.hadAccident === true && (
-                <div className="mt-3 p-3 bg-red-50 border-2 border-red-200 rounded-xl">
-                  <p className="text-sm text-red-700">⚠️ Accident damage is not covered by warranty</p>
+                <div className="mt-4 p-4 bg-red-50 rounded-xl flex items-start gap-3 text-red-700">
+                  <ShieldAlert className="shrink-0 mt-1" size={20} />
+                  <p className="text-sm"><strong>Note:</strong> Damage from accidents, crashes, or drops is not covered by the manufacturer warranty.</p>
                 </div>
               )}
             </div>
           </div>
         );
 
-      case 1: // Issue Type
+      case 2:
         return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold">What issues are you experiencing?</h2>
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+            <h2 className="text-2xl font-bold">What problem(s) do you have?</h2>
             <p className="text-slate-600">Select all that apply</p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {['Error Code', 'Physical Damage', 'Performance/Noise', 'Not sure/Other'].map(category => (
-                <button
-                  key={category}
-                  onClick={() => {
-                    const current = formData.issueCategories;
-                    if (current.includes(category)) {
-                      updateFormData('issueCategories', current.filter(c => c !== category));
-                    } else {
-                      updateFormData('issueCategories', [...current, category]);
-                    }
-                  }}
-                  className={`p-6 border-2 rounded-2xl font-semibold text-left transition-all ${
-                    formData.issueCategories.includes(category)
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-slate-200 hover:border-blue-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span>{category}</span>
-                    {formData.issueCategories.includes(category) && (
-                      <Check className="text-blue-600" size={24} />
-                    )}
-                  </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {['Error Code', 'Physical Damage', 'Noise / Performance', 'Not Sure / Other'].map(cat => (
+                <button key={cat} onClick={() => toggleArrayItem('issueCategories', cat)} className={`p-6 border-2 rounded-2xl font-semibold text-left flex justify-between items-center transition-all ${formData.issueCategories.includes(cat) ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 hover:border-blue-300'}`}>
+                  <span>{cat}</span>
+                  {formData.issueCategories.includes(cat) && <Check size={20} />}
                 </button>
               ))}
             </div>
           </div>
         );
 
-      case 2: // Details
+      case 3:
         return (
-          <div className="space-y-6">
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
             <h2 className="text-2xl font-bold">Issue Details</h2>
             
             {formData.issueCategories.includes('Error Code') && (
-              <div>
-                <label className="block font-semibold mb-3">Select Error Codes</label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {ERROR_CODES.map(error => (
-                    <button
-                      key={error.code}
-                      onClick={() => {
-                        const current = formData.selectedErrorCodes;
-                        if (current.includes(error.code)) {
-                          updateFormData('selectedErrorCodes', current.filter(c => c !== error.code));
-                        } else {
-                          updateFormData('selectedErrorCodes', [...current, error.code]);
-                        }
-                      }}
-                      className={`p-4 border-2 rounded-xl font-bold transition-all ${
-                        formData.selectedErrorCodes.includes(error.code)
-                          ? 'border-red-500 bg-red-50 text-red-700'
-                          : 'border-slate-200 hover:border-red-300'
-                      }`}
-                    >
-                      {error.code}
-                      <p className="text-xs font-normal mt-1">{error.name}</p>
+              <div className="space-y-3">
+                <label className="block font-semibold">Select error codes from your display:</label>
+                <div className="flex flex-wrap gap-3">
+                  {ERROR_CODES.map(code => (
+                    <button key={code} onClick={() => toggleArrayItem('errorCodes', code)} className={`px-5 py-3 border-2 rounded-xl font-bold transition-all ${formData.errorCodes.includes(code) ? 'border-red-500 bg-red-50 text-red-700' : 'border-slate-200'}`}>
+                      {code}
                     </button>
                   ))}
                 </div>
@@ -377,451 +285,268 @@ export default function RepairBookingPage() {
             )}
 
             {formData.issueCategories.includes('Physical Damage') && (
-              <div>
-                <label className="block font-semibold mb-3">Damaged Parts</label>
-                <div className="space-y-2">
+              <div className="space-y-3">
+                <label className="block font-semibold">Which parts are damaged?</label>
+                <div className="grid grid-cols-2 gap-3">
                   {DAMAGE_PARTS.map(part => (
-                    <label key={part} className="flex items-center p-3 border-2 border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.selectedDamageParts.includes(part)}
-                        onChange={(e) => {
-                          const current = formData.selectedDamageParts;
-                          if (e.target.checked) {
-                            updateFormData('selectedDamageParts', [...current, part]);
-                          } else {
-                            updateFormData('selectedDamageParts', current.filter(p => p !== part));
-                          }
-                        }}
-                        className="mr-3 w-5 h-5"
-                      />
-                      <span>{part}</span>
+                    <label key={part} className="flex items-center p-4 border-2 rounded-xl cursor-pointer hover:bg-slate-50">
+                      <input type="checkbox" checked={formData.damageParts.includes(part)} onChange={() => toggleArrayItem('damageParts', part)} className="w-5 h-5 mr-3 accent-blue-600" />
+                      <div>
+                        <span>{part}</span>
+                        {EXCLUDED_FROM_WARRANTY.includes(part) && <p className="text-xs text-slate-500 mt-1">Not covered by warranty</p>}
+                      </div>
                     </label>
                   ))}
                 </div>
               </div>
             )}
 
-            {formData.issueCategories.includes('Performance/Noise') && (
-              <div>
-                <label className="block font-semibold mb-3">Performance Issues</label>
-                <div className="space-y-2">
-                  {PERFORMANCE_ISSUES.map(issue => (
-                    <label key={issue} className="flex items-center p-3 border-2 border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.selectedPerformanceIssues.includes(issue)}
-                        onChange={(e) => {
-                          const current = formData.selectedPerformanceIssues;
-                          if (e.target.checked) {
-                            updateFormData('selectedPerformanceIssues', [...current, issue]);
-                          } else {
-                            updateFormData('selectedPerformanceIssues', current.filter(i => i !== issue));
-                          }
-                        }}
-                        className="mr-3 w-5 h-5"
-                      />
-                      <span>{issue}</span>
-                    </label>
-                  ))}
-                </div>
+            {(formData.issueCategories.includes('Noise / Performance') || formData.issueCategories.includes('Not Sure / Other')) && (
+              <div className="space-y-3">
+                <label className="block font-semibold">Describe the issue</label>
+                <textarea value={formData.otherDescription} onChange={(e) => update('otherDescription', e.target.value)} placeholder="e.g. Wheels making noise when turning, battery dying fast..." rows={4} className="w-full p-4 border-2 border-slate-200 rounded-xl focus:border-blue-500" />
               </div>
             )}
 
-            {formData.issueCategories.includes('Not sure/Other') && (
-              <div>
-                <label className="block font-semibold mb-3">Describe the issue</label>
-                <textarea
-                  value={formData.otherDescription}
-                  onChange={(e) => updateFormData('otherDescription', e.target.value)}
-                  placeholder="Please describe what's happening with your scooter..."
-                  rows={4}
-                  className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none"
-                />
-              </div>
-            )}
-
-            <div>
-              <label className="block font-semibold mb-2">Is the scooter still rideable? *</label>
+            <div className="pt-4 border-t-2 border-slate-100">
+              <label className="block font-semibold mb-3">Is the scooter still rideable? *</label>
               <div className="flex gap-4">
-                <button
-                  onClick={() => updateFormData('scooterRideable', true)}
-                  className={`flex-1 p-4 border-2 rounded-xl font-semibold transition-all ${
-                    formData.scooterRideable === true
-                      ? 'border-green-500 bg-green-50 text-green-700'
-                      : 'border-slate-200 hover:border-green-300'
-                  }`}
-                >
-                  Yes
-                </button>
-                <button
-                  onClick={() => updateFormData('scooterRideable', false)}
-                  className={`flex-1 p-4 border-2 rounded-xl font-semibold transition-all ${
-                    formData.scooterRideable === false
-                      ? 'border-red-500 bg-red-50 text-red-700'
-                      : 'border-slate-200 hover:border-red-300'
-                  }`}
-                >
-                  No
-                </button>
+                <button onClick={() => update('rideable', true)} className={`flex-1 p-4 border-2 rounded-xl font-semibold transition-all ${formData.rideable === true ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200'}`}>Yes</button>
+                <button onClick={() => update('rideable', false)} className={`flex-1 p-4 border-2 rounded-xl font-semibold transition-all ${formData.rideable === false ? 'border-red-500 bg-red-50 text-red-700' : 'border-slate-200'}`}>No</button>
               </div>
-              {formData.scooterRideable === false && (
-                <div className="mt-3 p-3 bg-red-50 border-2 border-red-200 rounded-xl">
-                  <p className="text-sm text-red-700 flex items-start gap-2">
-                    <AlertCircle size={20} className="shrink-0 mt-0.5" />
-                    <span>⚠️ Do not ride the scooter. We recommend collection service.</span>
-                  </p>
+            </div>
+          </div>
+        );
+
+      case 4:
+        return (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+            <h2 className="text-2xl font-bold">Repair Plan</h2>
+            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+              <p className="font-semibold mb-4 text-lg">Do you want us to fix all reported issues?</p>
+              <div className="flex gap-4 mb-6">
+                <button onClick={() => update('fixAll', true)} className={`flex-1 p-3 border-2 rounded-xl font-semibold transition-all ${formData.fixAll === true ? 'border-blue-500 bg-blue-100 text-blue-700' : 'border-slate-200 bg-white'}`}>Yes, fix everything</button>
+                <button onClick={() => update('fixAll', false)} className={`flex-1 p-3 border-2 rounded-xl font-semibold transition-all ${formData.fixAll === false ? 'border-slate-500 bg-slate-200 text-slate-800' : 'border-slate-200 bg-white'}`}>No, let me choose</button>
+              </div>
+
+              {!formData.fixAll && (
+                <div className="space-y-3 animate-in fade-in">
+                  <p className="text-sm font-medium text-slate-600 mb-2">Select the specific issues you'd like quoted:</p>
+                  {allReportedIssues.map(issue => (
+                    <label key={issue} className="flex items-center p-3 bg-white border rounded-lg cursor-pointer">
+                      <input type="checkbox" checked={formData.selectedRepairs.includes(issue)} onChange={() => toggleArrayItem('selectedRepairs', issue)} className="w-5 h-5 mr-3 accent-blue-600" />
+                      <span>{issue}</span>
+                      {EXCLUDED_FROM_WARRANTY.includes(issue) && <span className="ml-auto text-xs font-semibold px-2 py-1 bg-amber-100 text-amber-800 rounded">Paid Part</span>}
+                    </label>
+                  ))}
                 </div>
               )}
             </div>
           </div>
         );
 
-      case 3: // Photos
+      case 5:
         return (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
             <h2 className="text-2xl font-bold">Upload Photos</h2>
-            <p className="text-slate-600">Please upload photos of your scooter (optional but recommended)</p>
+            <p className="text-slate-600">Please upload photos to help diagnosis (Max 5MB each). Recommended views:</p>
+            <ul className="grid grid-cols-2 gap-2 text-sm text-slate-600 mb-4 list-disc pl-5">
+              <li>Front view</li>
+              <li>Rear view</li>
+              <li>Sides (wheels)</li>
+              <li>Under deck (serial sticker)</li>
+            </ul>
             
-            <div className="border-2 border-dashed border-slate-300 rounded-2xl p-8 text-center">
-              <Upload className="mx-auto mb-4 text-slate-400" size={48} />
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handlePhotoUpload}
-                className="hidden"
-                id="photo-upload"
-              />
-              <label htmlFor="photo-upload" className="cursor-pointer">
-                <span className="bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-600 inline-block">
-                  Choose Photos
-                </span>
+            <div className="border-2 border-dashed border-slate-300 rounded-2xl p-8 text-center bg-slate-50 hover:bg-slate-100 transition-colors">
+              <Upload className="mx-auto mb-4 text-slate-400" size={40} />
+              <input type="file" accept="image/*" multiple onChange={(e) => update('photos', Array.from(e.target.files || []))} className="hidden" id="photo-upload" />
+              <label htmlFor="photo-upload" className="cursor-pointer bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 inline-block">
+                Select Images
               </label>
-              <p className="text-sm text-slate-500 mt-2">JPG or PNG, max 5MB each</p>
+            </div>
+            {formData.photos.length > 0 && <p className="font-semibold text-green-600">{formData.photos.length} files attached.</p>}
+          </div>
+        );
+
+      case 6:
+        return (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+            <h2 className="text-2xl font-bold">Service Type & Booking</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button onClick={() => update('serviceType', 'drop-off')} className={`p-6 border-2 rounded-2xl text-left transition-all ${formData.serviceType === 'drop-off' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-300'}`}>
+                <MapPin className={`mb-3 ${formData.serviceType === 'drop-off' ? 'text-blue-600' : 'text-slate-400'}`} size={32} />
+                <h3 className="font-bold text-lg">Workshop Drop-off</h3>
+                <p className="text-sm text-slate-500 mt-1">Bring your scooter to us</p>
+              </button>
+              <button onClick={() => update('serviceType', 'collection')} className={`p-6 border-2 rounded-2xl text-left transition-all ${formData.serviceType === 'collection' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-300'}`}>
+                <Wrench className={`mb-3 ${formData.serviceType === 'collection' ? 'text-blue-600' : 'text-slate-400'}`} size={32} />
+                <h3 className="font-bold text-lg">Courier Collection</h3>
+                <p className="text-sm text-slate-500 mt-1">We pick up (£20 fee + £20 return)</p>
+              </button>
             </div>
 
-            {formData.photos.length > 0 && (
-              <div>
-                <p className="font-semibold mb-3">{formData.photos.length} photo(s) selected</p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {formData.photos.map((photo, index) => (
-                    <div key={index} className="relative">
-                      <div className="aspect-square bg-slate-100 rounded-xl flex items-center justify-center">
-                        <img
-                          src={URL.createObjectURL(photo)}
-                          alt={`Upload ${index + 1}`}
-                          className="w-full h-full object-cover rounded-xl"
-                        />
-                      </div>
-                      <button
-                        onClick={() => removePhoto(index)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
+            {formData.serviceType && (
+              <div className="space-y-4 pt-4 animate-in fade-in">
+                <div>
+                  <label className="block font-semibold mb-2">{formData.serviceType === 'drop-off' ? 'Drop-off Date *' : 'Pickup Date *'}</label>
+                  <input type="date" value={formData.bookingDate} min={new Date().toISOString().split('T')[0]} onChange={(e) => update('bookingDate', e.target.value)} className="w-full p-4 border-2 border-slate-200 rounded-xl" />
                 </div>
+                
+                {formData.serviceType === 'drop-off' && (
+                  <div>
+                    <label className="block font-semibold mb-2">Time Slot *</label>
+                    <select value={formData.timeSlot} onChange={(e) => update('timeSlot', e.target.value)} className="w-full p-4 border-2 border-slate-200 rounded-xl bg-white">
+                      <option value="">Select a time</option>
+                      <option>Morning (09:00 - 12:00)</option>
+                      <option>Afternoon (12:00 - 17:00)</option>
+                    </select>
+                  </div>
+                )}
+
+                {formData.serviceType === 'collection' && (
+                  <div className="space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <h4 className="font-semibold text-slate-700">Collection Address</h4>
+                    <input type="text" placeholder="Address Line 1 *" value={formData.addressLine1} onChange={(e) => update('addressLine1', e.target.value)} className="w-full p-3 border rounded-lg" />
+                    <div className="grid grid-cols-2 gap-3">
+                      <input type="text" placeholder="City *" value={formData.city} onChange={(e) => update('city', e.target.value)} className="w-full p-3 border rounded-lg" />
+                      <input type="text" placeholder="Postcode *" value={formData.postalCode} onChange={(e) => update('postalCode', e.target.value)} className="w-full p-3 border rounded-lg" />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
         );
 
-      case 4: // Booking
+      case 7:
         return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Booking Details</h2>
-            
-            <div>
-              <label className="block font-semibold mb-3">Service Type *</label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <button
-                  onClick={() => updateFormData('serviceType', 'drop-off')}
-                  className={`p-6 border-2 rounded-2xl font-semibold transition-all ${
-                    formData.serviceType === 'drop-off'
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-slate-200 hover:border-blue-300'
-                  }`}
-                >
-                  <div className="text-4xl mb-2">🏪</div>
-                  <div className="font-bold mb-1">Drop-off at Workshop</div>
-                  <div className="text-sm opacity-70">Bring your scooter to us</div>
-                </button>
-                <button
-                  onClick={() => updateFormData('serviceType', 'collection')}
-                  className={`p-6 border-2 rounded-2xl font-semibold transition-all ${
-                    formData.serviceType === 'collection'
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-slate-200 hover:border-blue-300'
-                  }`}
-                >
-                  <div className="text-4xl mb-2">🚚</div>
-                  <div className="font-bold mb-1">Collection Service</div>
-                  <div className="text-sm opacity-70">We pick up (+£20 fee)</div>
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-semibold mb-2">Preferred Date *</label>
-              <input
-                type="date"
-                value={formData.preferredDate}
-                onChange={(e) => updateFormData('preferredDate', e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-                className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none"
-              />
-            </div>
-
-            {formData.serviceType === 'drop-off' && (
-              <div>
-                <label className="block font-semibold mb-2">Time Slot</label>
-                <select
-                  value={formData.timeSlot}
-                  onChange={(e) => updateFormData('timeSlot', e.target.value)}
-                  className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none"
-                >
-                  <option value="">Select time slot</option>
-                  <option value="09:00-10:00">09:00 - 10:00</option>
-                  <option value="10:00-11:00">10:00 - 11:00</option>
-                  <option value="11:00-12:00">11:00 - 12:00</option>
-                  <option value="14:00-15:00">14:00 - 15:00</option>
-                  <option value="15:00-16:00">15:00 - 16:00</option>
-                  <option value="16:00-17:00">16:00 - 17:00</option>
-                </select>
-              </div>
-            )}
-          </div>
-        );
-
-      case 5: // Contact
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Contact Information</h2>
-            
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
+            <h2 className="text-2xl font-bold">Your Details</h2>
             <div>
               <label className="block font-semibold mb-2">Full Name *</label>
-              <input
-                type="text"
-                value={formData.customerName}
-                onChange={(e) => updateFormData('customerName', e.target.value)}
-                placeholder="John Smith"
-                className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none"
-              />
+              <input type="text" value={formData.customerName} onChange={(e) => update('customerName', e.target.value)} className="w-full p-4 border-2 border-slate-200 rounded-xl" />
             </div>
-
             <div>
               <label className="block font-semibold mb-2">Email Address *</label>
-              <input
-                type="email"
-                value={formData.customerEmail}
-                onChange={(e) => updateFormData('customerEmail', e.target.value)}
-                placeholder="john@example.com"
-                className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none"
-              />
+              <input type="email" value={formData.customerEmail} onChange={(e) => update('customerEmail', e.target.value)} className="w-full p-4 border-2 border-slate-200 rounded-xl" />
             </div>
-
             <div>
               <label className="block font-semibold mb-2">Phone Number</label>
-              <input
-                type="tel"
-                value={formData.customerPhone}
-                onChange={(e) => updateFormData('customerPhone', e.target.value)}
-                placeholder="07123456789"
-                className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none"
-              />
+              <input type="tel" value={formData.customerPhone} onChange={(e) => update('customerPhone', e.target.value)} className="w-full p-4 border-2 border-slate-200 rounded-xl" />
+            </div>
+          </div>
+        );
+
+      case 8:
+        return (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+            <h2 className="text-2xl font-bold">Review & Confirm</h2>
+            
+            <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 space-y-4">
+              <div className="flex justify-between items-start border-b pb-4">
+                <div>
+                  <p className="text-sm text-slate-500">Scooter</p>
+                  <p className="font-bold text-lg">{formData.model}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-slate-500">Warranty Status</p>
+                  {isWarrantyValid ? (
+                    <span className="inline-flex items-center gap-1 text-green-700 bg-green-100 px-3 py-1 rounded-full text-sm font-semibold">
+                      <Check size={14} /> Active
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-red-700 bg-red-100 px-3 py-1 rounded-full text-sm font-semibold">
+                      <AlertCircle size={14} /> Expired / Void
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="border-b pb-4">
+                <p className="text-sm text-slate-500 mb-2">Service Route</p>
+                <p className="font-semibold">{formData.serviceType === 'drop-off' ? 'Workshop Drop-off' : 'Courier Collection'}</p>
+                <p className="text-sm">{formData.bookingDate} {formData.timeSlot}</p>
+              </div>
+
+              <div>
+                <p className="text-sm text-slate-500 mb-3">Estimated Charges</p>
+                <div className="space-y-2">
+                  {costEstimate.items.map((item, i) => (
+                    <div key={i} className="flex justify-between text-sm">
+                      <span className="text-slate-700">{item.name}</span>
+                      {item.covered ? (
+                        <span className="text-green-600 font-semibold">Covered</span>
+                      ) : (
+                        <span className="font-medium">£{item.cost}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="flex justify-between items-center mt-4 pt-4 border-t-2 border-slate-100">
+                  <span className="font-bold text-lg">Estimated Total</span>
+                  <span className="font-bold text-xl text-blue-700">£{costEstimate.total}</span>
+                </div>
+              </div>
             </div>
 
-            {formData.serviceType === 'collection' && (
-              <>
-                <div>
-                  <label className="block font-semibold mb-2">Address Line 1 *</label>
-                  <input
-                    type="text"
-                    value={formData.addressLine1}
-                    onChange={(e) => updateFormData('addressLine1', e.target.value)}
-                    placeholder="123 Main Street"
-                    className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none"
-                  />
+            {costEstimate.deposit > 0 && (
+              <div className="bg-blue-50 border border-blue-200 p-5 rounded-xl">
+                <h4 className="font-bold text-blue-900 mb-1">Deposit Required: £{costEstimate.deposit}</h4>
+                <p className="text-sm text-blue-800 mb-4">Required to secure your booking (Courier + Diagnostics).</p>
+                
+                <div className="flex gap-3">
+                  <button onClick={() => update('paymentOption', 'pay-now')} className={`flex-1 py-3 px-4 rounded-lg font-bold border-2 transition-all ${formData.paymentOption === 'pay-now' ? 'border-blue-600 bg-blue-600 text-white' : 'border-blue-300 text-blue-700 hover:bg-blue-100'}`}>Pay Now</button>
+                  <button onClick={() => update('paymentOption', 'pay-later')} className={`flex-1 py-3 px-4 rounded-lg font-bold border-2 transition-all ${formData.paymentOption === 'pay-later' ? 'border-slate-600 bg-slate-600 text-white' : 'border-slate-300 text-slate-700 hover:bg-slate-100'}`}>Pay on Completion</button>
                 </div>
-
-                <div>
-                  <label className="block font-semibold mb-2">Address Line 2</label>
-                  <input
-                    type="text"
-                    value={formData.addressLine2}
-                    onChange={(e) => updateFormData('addressLine2', e.target.value)}
-                    placeholder="Apartment, suite, etc."
-                    className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block font-semibold mb-2">City *</label>
-                    <input
-                      type="text"
-                      value={formData.city}
-                      onChange={(e) => updateFormData('city', e.target.value)}
-                      placeholder="London"
-                      className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-semibold mb-2">Postal Code *</label>
-                    <input
-                      type="text"
-                      value={formData.postalCode}
-                      onChange={(e) => updateFormData('postalCode', e.target.value)}
-                      placeholder="SW1A 1AA"
-                      className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none"
-                    />
-                  </div>
-                </div>
-              </>
+              </div>
             )}
           </div>
         );
-
-      case 6: // Summary
-        const cost = calculateEstimatedCost();
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Booking Summary</h2>
-            
-            <div className="bg-slate-50 rounded-2xl p-6 space-y-4">
-              <div>
-                <h3 className="font-semibold mb-2">Scooter Details</h3>
-                <p className="text-sm text-slate-600">Model: {formData.scooterModel}</p>
-                <p className="text-sm text-slate-600">Purchase Date: {formData.purchaseDate}</p>
-                <p className={`text-sm font-semibold ${cost.isWarranty ? 'text-green-600' : 'text-red-600'}`}>
-                  {cost.isWarranty ? '✓ Under Warranty' : '✗ Out of Warranty'}
-                </p>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-2">Issues Reported</h3>
-                <div className="flex flex-wrap gap-2">
-                  {formData.issueCategories.map(cat => (
-                    <span key={cat} className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-sm font-semibold">
-                      {cat}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-2">Service Type</h3>
-                <p className="text-sm text-slate-600">
-                  {formData.serviceType === 'drop-off' ? '🏪 Drop-off at Workshop' : '🚚 Collection Service'}
-                </p>
-                <p className="text-sm text-slate-600">Date: {formData.preferredDate}</p>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-2">Contact</h3>
-                <p className="text-sm text-slate-600">{formData.customerName}</p>
-                <p className="text-sm text-slate-600">{formData.customerEmail}</p>
-              </div>
-            </div>
-
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6">
-              <h3 className="font-bold text-lg mb-4">Estimated Cost</h3>
-              {cost.isWarranty ? (
-                <div>
-                  <p className="text-green-600 font-bold text-xl">£0 - Covered by Warranty</p>
-                  <p className="text-sm text-slate-600 mt-2">Subject to inspection approval</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {cost.items.map((item, index) => (
-                    <div key={index} className="flex justify-between text-sm">
-                      <span>{item.item}</span>
-                      <span className="font-semibold">£{item.cost}</span>
-                    </div>
-                  ))}
-                  <div className="border-t-2 border-blue-300 pt-2 mt-2 flex justify-between">
-                    <span className="font-bold text-lg">Total</span>
-                    <span className="font-bold text-lg text-blue-600">£{cost.total}</span>
-                  </div>
-                  <p className="text-xs text-slate-600 mt-2">*Final cost confirmed after inspection</p>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-
-      default:
-        return <div>Step content</div>;
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Progress Bar */}
+    <div className="min-h-screen bg-slate-50 py-12 px-4 text-slate-900 font-sans">
+      <div className="max-w-2xl mx-auto">
+        
+        {/* Progress Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            {STEPS.map((step, index) => (
-              <div key={step} className="flex items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                  index < currentStep
-                    ? 'bg-green-500 text-white'
-                    : index === currentStep
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-slate-200 text-slate-500'
-                }`}>
-                  {index < currentStep ? <Check size={20} /> : index + 1}
-                </div>
-                {index < STEPS.length - 1 && (
-                  <div className={`w-12 h-1 mx-2 ${
-                    index < currentStep ? 'bg-green-500' : 'bg-slate-200'
-                  }`} />
-                )}
-              </div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-bold text-slate-400">Step {step + 1} of {STEPS.length}</span>
+            <span className="text-sm font-bold text-blue-600">{STEPS[step]}</span>
+          </div>
+          <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden flex">
+            {STEPS.map((_, i) => (
+              <div key={i} className={`h-full flex-1 border-r border-slate-300/30 transition-all duration-300 ${i <= step ? 'bg-blue-500' : 'bg-transparent'}`} />
             ))}
           </div>
-          <p className="text-center text-sm text-slate-600">
-            Step {currentStep + 1} of {STEPS.length}: {STEPS[currentStep]}
-          </p>
         </div>
 
-        {/* Step Content */}
-        <div className="bg-white rounded-3xl border-2 border-slate-200 p-8 mb-6">
-          {renderStepContent()}
+        {/* Card Content */}
+        <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-6 md:p-10 mb-6 border border-slate-100 min-h-[400px]">
+          {renderStep()}
         </div>
 
-        {/* Navigation Buttons */}
+        {/* Navigation Footer */}
         <div className="flex gap-4">
-          {currentStep > 0 && (
-            <button
-              onClick={prevStep}
-              className="flex items-center gap-2 px-6 py-3 border-2 border-slate-200 rounded-xl font-semibold hover:bg-slate-50 transition-all"
-            >
-              <ChevronLeft size={20} />
-              Previous
+          {step > 0 && (
+            <button onClick={() => setStep(s => s - 1)} className="px-6 py-4 rounded-xl font-bold text-slate-600 bg-white border-2 border-slate-200 hover:bg-slate-50 transition-all flex items-center gap-2">
+              <ChevronLeft size={20} /> Back
             </button>
           )}
           
-          {currentStep < STEPS.length - 1 ? (
-            <button
-              onClick={nextStep}
-              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-600 transition-all"
-            >
-              Next
-              <ChevronRight size={20} />
+          {step < STEPS.length - 1 ? (
+            <button onClick={nextStep} disabled={!canProceed()} className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-bold transition-all ${canProceed() ? 'bg-blue-600 text-white shadow-lg hover:bg-blue-700' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}>
+              Next Step <ChevronRight size={20} />
             </button>
           ) : (
-            <button
-              onClick={handleSubmit}
-              className="flex-1 px-6 py-3 bg-green-500 text-white rounded-xl font-semibold hover:bg-green-600 transition-all"
-            >
-              Submit Booking
+            <button disabled={!canProceed()} className={`flex-1 px-6 py-4 rounded-xl font-bold text-white transition-all shadow-lg ${canProceed() ? 'bg-green-600 hover:bg-green-700' : 'bg-slate-300 cursor-not-allowed'}`}>
+              {formData.paymentOption === 'pay-now' ? `Pay £${costEstimate.deposit} & Book` : 'Confirm Booking'}
             </button>
           )}
         </div>
+
       </div>
     </div>
   );
