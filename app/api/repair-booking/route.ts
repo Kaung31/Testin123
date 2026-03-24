@@ -8,20 +8,19 @@ export async function POST(request: Request) {
   try {
     const data = await request.json();
     
-    // Send email to CS team (YOUR EMAIL!)
+    // Send email to CS team
     await resend.emails.send({
-      from: `Testing Company <${process.env.FROM_EMAIL}>`,  // ✅ Changed name
-      to: [process.env.CS_TEAM_EMAIL!],  // ✅ Changed to your email
-      subject: `🔧 New Repair Booking - ${data.scooterModel} - ${data.customerName}`,
+      from: `Testing Company <${process.env.FROM_EMAIL}>`,
+      to: [process.env.CS_TEAM_EMAIL!],
+      subject: `🔧 New Repair Booking - ${data.model} - ${data.customerName}`,
       html: generateEmailHTML(data),
     });
 
     // Send confirmation to customer
     await resend.emails.send({
-      from: `Testing Company <${process.env.FROM_EMAIL}>`,  // ✅ Changed name
+      from: `Testing Company <${process.env.FROM_EMAIL}>`,
       to: [data.customerEmail],
-      // to: [process.env.CS_TEAM_EMAIL!],
-      subject: '✓ Your Testing Company Repair Booking Confirmation',  // ✅ Changed subject
+      subject: '✓ Your Testing Company Repair Booking Confirmation',
       html: generateCustomerConfirmationHTML(data),
     });
 
@@ -36,8 +35,6 @@ export async function POST(request: Request) {
 }
 
 function generateEmailHTML(data: any) {
-  const { total, items, isWarranty } = data.estimatedCost;
-  
   return `
     <!DOCTYPE html>
     <html>
@@ -55,7 +52,6 @@ function generateEmailHTML(data: any) {
         .cost-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
         .cost-table td { padding: 8px; border-bottom: 1px solid #ddd; }
         .total { font-size: 1.2em; font-weight: bold; color: #3B82F6; }
-        .photo-link { display: inline-block; padding: 8px 16px; background: #3B82F6; color: white; text-decoration: none; border-radius: 5px; margin: 5px; }
       </style>
     </head>
     <body>
@@ -65,7 +61,6 @@ function generateEmailHTML(data: any) {
           <p>Submitted: ${new Date(data.submittedAt).toLocaleString()}</p>
         </div>
 
-        <!-- Customer Information -->
         <div class="section">
           <h2>👤 Customer Information</h2>
           <p><span class="label">Name:</span><span class="value">${data.customerName}</span></p>
@@ -75,29 +70,26 @@ function generateEmailHTML(data: any) {
             <p><span class="label">Address:</span></p>
             <p class="value">
               ${data.addressLine1}<br>
-              ${data.addressLine2 ? data.addressLine2 + '<br>' : ''}
               ${data.city}, ${data.postalCode}
             </p>
           ` : ''}
         </div>
 
-        <!-- Scooter Information -->
         <div class="section">
           <h2>🛴 Scooter Information</h2>
-          <p><span class="label">Model:</span><span class="value">${data.scooterModel}</span></p>
+          <p><span class="label">Model:</span><span class="value">${data.model}</span></p>
           <p><span class="label">Purchase Date:</span><span class="value">${data.purchaseDate}</span></p>
           <p><span class="label">Serial Number:</span><span class="value">${data.serialNumber || 'Not provided'}</span></p>
           <p><span class="label">Warranty Status:</span>
-            <span class="${isWarranty ? 'warranty-yes' : 'warranty-no'}">
-              ${isWarranty ? '✓ UNDER WARRANTY' : '✗ OUT OF WARRANTY'}
+            <span class="${data.isWarranty ? 'warranty-yes' : 'warranty-no'}">
+              ${data.isWarranty ? '✓ UNDER WARRANTY' : '✗ OUT OF WARRANTY / VOID'}
             </span>
           </p>
           <p><span class="label">Accident/Crash:</span>
-            <span class="value">${data.hadAccident ? '⚠️ YES - NOT COVERED' : '✓ No'}</span>
+            <span class="value">${data.hadAccident ? '⚠️ YES - WARRANTY VOIDED' : '✓ No'}</span>
           </p>
         </div>
 
-        <!-- Reported Issues -->
         <div class="section">
           <h2>⚠️ Reported Issues</h2>
           <p><span class="label">Issue Categories:</span></p>
@@ -105,24 +97,24 @@ function generateEmailHTML(data: any) {
             ${data.issueCategories.map((cat: string) => `<span class="issue-tag">${cat}</span>`).join('')}
           </div>
 
-          ${data.selectedErrorCodes.length > 0 ? `
+          ${data.errorCodes && data.errorCodes.length > 0 ? `
             <p style="margin-top: 15px;"><span class="label">Error Codes:</span></p>
             <div>
-              ${data.selectedErrorCodes.map((code: string) => `<span class="issue-tag">${code}</span>`).join('')}
+              ${data.errorCodes.map((code: string) => `<span class="issue-tag">${code}</span>`).join('')}
             </div>
           ` : ''}
 
-          ${data.selectedDamageParts.length > 0 ? `
+          ${data.damageParts && data.damageParts.length > 0 ? `
             <p style="margin-top: 15px;"><span class="label">Damaged Parts:</span></p>
             <ul>
-              ${data.selectedDamageParts.map((part: string) => `<li>${part}</li>`).join('')}
+              ${data.damageParts.map((part: string) => `<li>${part}</li>`).join('')}
             </ul>
           ` : ''}
 
-          ${data.selectedPerformanceIssues.length > 0 ? `
-            <p style="margin-top: 15px;"><span class="label">Performance Issues:</span></p>
+          ${data.noiseIssues && data.noiseIssues.length > 0 ? `
+            <p style="margin-top: 15px;"><span class="label">Performance/Noise Issues:</span></p>
             <ul>
-              ${data.selectedPerformanceIssues.map((issue: string) => `<li>${issue}</li>`).join('')}
+              ${data.noiseIssues.map((issue: string) => `<li>${issue}</li>`).join('')}
             </ul>
           ` : ''}
 
@@ -133,74 +125,49 @@ function generateEmailHTML(data: any) {
 
           <p style="margin-top: 15px;">
             <span class="label">Scooter Rideable:</span>
-            <span class="value">${data.scooterRideable ? 'Yes' : '⚠️ NO - DO NOT RIDE'}</span>
+            <span class="value">${data.rideable ? 'Yes' : '⚠️ NO - DO NOT RIDE'}</span>
           </p>
+
+          <p style="margin-top: 15px;"><span class="label">Fix Strategy:</span> 
+            ${data.fixAll ? 'Customer wants ALL issues fixed' : 'Customer only wants SPECIFIC issues fixed'}
+          </p>
+          <ul>
+            ${data.selectedRepairs && data.selectedRepairs.map((repair: string) => `<li>Requested Quote for: <strong>${repair}</strong></li>`).join('')}
+          </ul>
         </div>
 
-        <!-- Photos & Videos -->
-        ${data.photoUrls && data.photoUrls.length > 0 ? `
-          <div class="section">
-            <h2>📷 Uploaded Photos & Videos (${data.photoUrls.length})</h2>
-            <p style="margin-bottom: 15px;">Click the links below to view:</p>
-            <div>
-              ${data.photoUrls.map((url: string, index: number) => {
-                const isVideo = url.includes('/video/upload/');
-                return `
-                  <a href="${url}" target="_blank" class="photo-link">
-                    ${isVideo ? '🎥' : '📷'} ${isVideo ? 'Video' : 'Photo'} ${index + 1}
-                  </a>
-                `;
-              }).join('')}
-            </div>
-          </div>
-        ` : ''}
-
-        <!-- Booking Details -->
         <div class="section">
           <h2>📅 Booking Details</h2>
           <p><span class="label">Service Type:</span>
-            <span class="value">${data.serviceType === 'drop-off' ? '🏪 Drop-off at Workshop' : '🚚 Collection Service'}</span>
+            <span class="value">${data.serviceType === 'drop-off' ? '🏪 Drop-off at Workshop' : '🚚 Courier Collection'}</span>
           </p>
-          <p><span class="label">Preferred Date:</span><span class="value">${data.preferredDate}</span></p>
+          <p><span class="label">Booking Date:</span><span class="value">${data.bookingDate}</span></p>
           ${data.timeSlot ? `<p><span class="label">Time Slot:</span><span class="value">${data.timeSlot}</span></p>` : ''}
+          <p><span class="label">Payment Plan:</span><span class="value">${data.paymentOption === 'pay-now' ? '💰 Agreed to Pay Deposit Now' : 'Pay on Completion'}</span></p>
         </div>
 
-        <!-- Cost Estimate -->
         <div class="section">
           <h2>💰 Estimated Cost</h2>
-          ${isWarranty ? `
+          ${data.isWarranty ? `
             <p class="warranty-yes">✓ COVERED BY WARRANTY (Inspection Only)</p>
-            <p style="font-size: 0.9em; color: #666;">Customer pays £0 if warranty claim approved.</p>
+            <p style="font-size: 0.9em; color: #666;">Customer pays £0 if warranty claim approved. Note: Excludes wear and tear items.</p>
           ` : `
             <table class="cost-table">
-              ${items.map((item: any) => `
-                <tr>
-                  <td>${item.item}</td>
-                  <td style="text-align: right;">£${item.cost}</td>
-                </tr>
-              `).join('')}
+              <tr>
+                <td class="total">DEPOSIT REQUIRED</td>
+                <td class="total" style="text-align: right; color: #DC2626;">£${data.depositRequired}</td>
+              </tr>
               <tr style="border-top: 2px solid #333;">
                 <td class="total">TOTAL ESTIMATED</td>
-                <td class="total" style="text-align: right;">£${total}</td>
+                <td class="total" style="text-align: right;">£${data.estimatedTotal}</td>
               </tr>
             </table>
             <p style="font-size: 0.9em; color: #666;">
-              * Final cost may vary after inspection. Deposit of £40 required.
+              * Deposit covers Diagnostics (£20) + Courier (£20) if applicable.
             </p>
           `}
         </div>
 
-        <!-- Next Steps -->
-        <div class="section">
-          <h2>✅ Next Steps for CS Team</h2>
-          <ol>
-            <li>Review booking details and photos above</li>
-            <li>Verify issue description</li>
-            <li>Contact customer at <strong>${data.customerEmail}</strong> or <strong>${data.customerPhone}</strong></li>
-            <li>${data.serviceType === 'collection' ? 'Arrange courier pickup' : 'Confirm drop-off appointment'}</li>
-            <li>Update customer on repair timeline (7-10 working days)</li>
-          </ol>
-        </div>
       </div>
     </body>
     </html>
@@ -208,8 +175,6 @@ function generateEmailHTML(data: any) {
 }
 
 function generateCustomerConfirmationHTML(data: any) {
-  const { total, isWarranty } = data.estimatedCost;
-  
   return `
     <!DOCTYPE html>
     <html>
@@ -230,18 +195,19 @@ function generateCustomerConfirmationHTML(data: any) {
 
         <div class="section">
           <h2>Hi ${data.customerName},</h2>
-          <p>We've received your repair booking for your <strong>${data.scooterModel}</strong>.</p>
+          <p>We've received your repair booking for your <strong>${data.model}</strong>.</p>
           
           <p><strong>Booking Reference:</strong> #${Date.now().toString().slice(-6)}</p>
-          <p><strong>Service Type:</strong> ${data.serviceType === 'drop-off' ? 'Workshop Drop-off' : 'Collection Service'}</p>
-          <p><strong>Preferred Date:</strong> ${data.preferredDate}</p>
+          <p><strong>Service Type:</strong> ${data.serviceType === 'drop-off' ? 'Workshop Drop-off' : 'Courier Collection'}</p>
+          <p><strong>Date:</strong> ${data.bookingDate}</p>
           
-          ${isWarranty ? `
-            <p style="color: #10B981; font-weight: bold;">✓ Your scooter is under warranty</p>
-            <p>No charge for covered repairs (subject to inspection).</p>
+          ${data.isWarranty ? `
+            <p style="color: #10B981; font-weight: bold;">✓ Your scooter is flagged as under warranty</p>
+            <p>No charge for covered repairs (subject to physical inspection).</p>
           ` : `
-            <p><strong>Estimated Cost:</strong> £${total}</p>
-            <p style="font-size: 0.9em; color: #666;">*Deposit of £40 required. Final cost confirmed after inspection.</p>
+            <p><strong>Estimated Total:</strong> £${data.estimatedTotal}</p>
+            <p><strong>Deposit Required:</strong> £${data.depositRequired}</p>
+            <p style="font-size: 0.9em; color: #666;">*Final cost confirmed after inspection.</p>
           `}
         </div>
 
@@ -249,21 +215,11 @@ function generateCustomerConfirmationHTML(data: any) {
           <h3>What Happens Next?</h3>
           <ol>
             <li>Our CS team will contact you within 24 hours</li>
-            <li>${data.serviceType === 'collection' ? 'We will arrange courier pickup' : 'Bring your scooter to our workshop'}</li>
+            <li>${data.serviceType === 'collection' ? 'We will arrange your courier pickup' : 'Bring your scooter to our workshop'}</li>
             <li>Repair typically takes 7-10 working days</li>
             <li>We'll update you throughout the process</li>
           </ol>
         </div>
-
-        <div class="section">
-          <h3>Need Help?</h3>
-          <p>Contact our support team:</p>
-          <p>📧 Email: support@p#####.com</p>
-        </div>
-
-        <p style="text-align: center; color: #666; font-size: 0.9em; margin-top: 30px;">
-          This is an automated confirmation. Please do not reply to this email.
-        </p>
       </div>
     </body>
     </html>
